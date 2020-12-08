@@ -1,2 +1,2 @@
 # AutoPlug-Core
-Frequently used code accross all AutoPlug projects inside one jar.
+Frequently used code across all AutoPlug projects inside one jar.
