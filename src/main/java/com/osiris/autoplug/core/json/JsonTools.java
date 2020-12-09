@@ -50,11 +50,11 @@ public class JsonTools {
 
     public JsonArray getJsonArray(String url) throws Exception{
         JsonElement element = getJsonElement(url);
-        if (element!=null && element.isJsonObject()){
+        if (element!=null && element.isJsonArray()){
             return element.getAsJsonArray();
         }
         else{
-            throw new Exception("Its not a json object! Check it out -> " + url);
+            throw new Exception("Its not a json array! Check it out -> " + url);
         }
     }
 
