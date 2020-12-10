@@ -14,7 +14,7 @@
 
     <groupId>com.osiris.autoplug.core</groupId>
     <artifactId>autoplug-core</artifactId>
-    <version>1</version>
+    <version>3</version>
     <packaging>jar</packaging>
 
     <name>AutoPlug-Core</name>

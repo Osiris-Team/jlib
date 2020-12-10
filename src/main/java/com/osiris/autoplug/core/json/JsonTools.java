@@ -33,7 +33,7 @@ public class JsonTools {
         //Requests and connections
         final URL url = new URL(input_url);
         final HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.addRequestProperty("User-Agent", "Mozilla/5.0");
+        con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online");
         InputStream in;
         InputStreamReader inr;
 
