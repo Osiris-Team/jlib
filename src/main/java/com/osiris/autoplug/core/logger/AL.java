@@ -33,13 +33,13 @@ import java.time.format.DateTimeFormatter;
  * That's why we need this class.
  */
 public class AL {
-    private static String NAME;
-    private static File DIR;
-    private static File DIR_FULL;
-    private static File DIR_WARN;
-    private static File DIR_ERROR;
-    private static File LOG_LATEST;
-    private static boolean isDebugEnabled = false;
+    public static String NAME;
+    public static File DIR;
+    public static File DIR_FULL;
+    public static File DIR_WARN;
+    public static File DIR_ERROR;
+    public static File LOG_LATEST;
+    public static boolean isDebugEnabled = false;
 
     /**
      * Starts the logger with defaults:

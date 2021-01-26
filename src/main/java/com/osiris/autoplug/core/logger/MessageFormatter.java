@@ -25,41 +25,41 @@ public class MessageFormatter {
         Ansi ansi;
         switch (msg.getType()) {
             case INFO:
-                tags = Ansi.ansi().bg(Color.WHITE)
-                        .fg(Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
-                        .fg(Color.CYAN).a("["+msg.getLabel()+"]")
-                        .fg(Color.BLACK).a("["+msg.getType()+"]")
+                tags = Ansi.ansi().bg(Ansi.Color.WHITE)
+                        .fg(Ansi.Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
+                        .fg(Ansi.Color.CYAN).a("["+msg.getLabel()+"]")
+                        .fg(Ansi.Color.BLACK).a("["+msg.getType()+"]")
                         .reset();
                 ansi = Ansi.ansi()
                         .a(" "+msg.getContent())
                         .reset().newline();
                 return ""+tags+ansi;
             case DEBUG:
-                tags = Ansi.ansi().bg(Color.WHITE)
-                        .fg(Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
-                        .fg(Color.CYAN).a("["+msg.getLabel()+"]")
-                        .fg(Color.MAGENTA).a("["+msg.getType()+"]")
+                tags = Ansi.ansi().bg(Ansi.Color.WHITE)
+                        .fg(Ansi.Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
+                        .fg(Ansi.Color.CYAN).a("["+msg.getLabel()+"]")
+                        .fg(Ansi.Color.MAGENTA).a("["+msg.getType()+"]")
                         .reset();
                 ansi = Ansi.ansi()
-                        .fg(Color.CYAN).a("["+msg.getOriginClass().getSimpleName()+"]")
+                        .fg(Ansi.Color.CYAN).a("["+msg.getOriginClass().getSimpleName()+"]")
                         .a(" "+msg.getContent())
                         .reset().newline();
                 return ""+tags+ansi;
             case WARN:
-                tags = Ansi.ansi().bg(Color.WHITE)
-                        .fg(Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
-                        .fg(Color.CYAN).a("["+msg.getLabel()+"]")
-                        .fg(Color.YELLOW).a("["+msg.getType()+"]")
+                tags = Ansi.ansi().bg(Ansi.Color.WHITE)
+                        .fg(Ansi.Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
+                        .fg(Ansi.Color.CYAN).a("["+msg.getLabel()+"]")
+                        .fg(Ansi.Color.YELLOW).a("["+msg.getType()+"]")
                         .reset();
                 ansi = Ansi.ansi()
-                        .fg(Color.YELLOW).a(" "+msg.getContent())
+                        .fg(Ansi.Color.YELLOW).a(" "+msg.getContent())
                         .reset().newline();
                 return ""+tags+ansi;
             case ERROR:
-                tags = Ansi.ansi().bg(Color.RED)
-                        .fg(Color.WHITE).a("["+dtf_small.format(msg.getDate())+"]")
-                        .fg(Color.WHITE).a("["+msg.getLabel()+"]")
-                        .fg(Color.WHITE).a("["+msg.getType()+"]");
+                tags = Ansi.ansi().bg(Ansi.Color.RED)
+                        .fg(Ansi.Color.WHITE).a("["+dtf_small.format(msg.getDate())+"]")
+                        .fg(Ansi.Color.WHITE).a("["+msg.getLabel()+"]")
+                        .fg(Ansi.Color.WHITE).a("["+msg.getType()+"]");
 
                 final StringBuilder builder = new StringBuilder();
                 builder.append(tags).append(Ansi.ansi().a("[!] ############################## [!]").newline());
@@ -72,15 +72,15 @@ public class MessageFormatter {
                     builder.append(tags).append(Ansi.ansi().a("[!] "+element.toString()+" [!]").newline());
                 }
 
-                builder.append(tags).append(Ansi.ansi().a("[!] AutoPlug is shutting down in 10 seconds. Log saved to /autoplug-logs. [!]").newline());
+                builder.append(tags).append(Ansi.ansi().a("[!] "+AL.NAME+" is shutting down in 10 seconds. Log saved to "+AL.DIR_FULL.getAbsolutePath()+". [!]").newline());
                 builder.append(tags).append(Ansi.ansi().a("[!] ############################## [!]").newline());
 
                 return builder.toString();
             default:
                 tags = Ansi.ansi()
-                        .fg(Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
-                        .fg(Color.CYAN).a("["+msg.getLabel()+"]")
-                        .fg(Color.BLACK).a("["+msg.getType()+"]")
+                        .fg(Ansi.Color.BLACK).a("["+dtf_small.format(msg.getDate())+"]")
+                        .fg(Ansi.Color.CYAN).a("["+msg.getLabel()+"]")
+                        .fg(Ansi.Color.BLACK).a("["+msg.getType()+"]")
                         .reset();
                 ansi = Ansi.ansi()
                         .a(" "+msg.getContent())
@@ -131,7 +131,7 @@ public class MessageFormatter {
                     builder.append(tags).append("[!] " + element.toString() + " [!]\n");
                 }
 
-                builder.append(tags).append("[!] AutoPlug is shutting down in 10 seconds. Log saved to /autoplug-logs. [!]\n");
+                builder.append(tags).append("[!] "+AL.NAME+" is shutting down in 10 seconds. Log saved to "+AL.DIR_FULL.getAbsolutePath()+". [!]\n");
                 builder.append(tags).append("[!] ############################## [!]\n");
                 return builder.toString();
             default:
