@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 
 public class Message {
     private LocalDateTime date;
-    private String label = "AutoPlug";
+    private String label = AL.NAME;
     private Class originClass;
     private MessageType type;
     private String content;
