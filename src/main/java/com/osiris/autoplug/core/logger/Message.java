@@ -48,6 +48,10 @@ public class Message {
         this.type = type;
         this.content = content;
         this.exception = e;
+        if (this.content==null && this.exception!=null)
+            this.content = exception.getMessage();
+        if (this.content==null && this.exception==null)
+            this.content = "No further information!";
         // Example message: [2.12.2020][MyApplication][Main.class][INFO] Some information...
     }
 
