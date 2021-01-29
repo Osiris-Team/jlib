@@ -120,7 +120,7 @@ public class AL {
             //Create writer after file exists
             LogFileWriter.createLogWriter(LOG_LATEST);
 
-            debug(this.getClass(),"Started AL");
+            debug(this.getClass(),"Started Logger("+name+")");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -197,8 +197,9 @@ public class AL {
 
         output(s1);
         LogFileWriter.writeToLog(s2);
+
+        String fileName = "";
         try{
-            String fileName = "";
             if (e!=null){
                 StackTraceElement element = e.getStackTrace()[0];
                 fileName = element.getClassName()+"()."+element.getMethodName()+"()";
@@ -212,6 +213,7 @@ public class AL {
             writer.flush();
         } catch (Exception exception) {
             exception.printStackTrace();
+            System.err.println("Error for file: "+fileName+".log");
         }
     }
 
@@ -233,8 +235,8 @@ public class AL {
         output(s1);
         LogFileWriter.writeToLog(s2);
 
+        String fileName = "";
         try{
-            String fileName = "";
             if (e!=null){
                 StackTraceElement element = e.getStackTrace()[0];
                 fileName = element.getClassName()+"()."+element.getMethodName()+"()";
@@ -248,6 +250,7 @@ public class AL {
             writer.flush();
         } catch (Exception exception) {
             exception.printStackTrace();
+            System.err.println("Error for file: "+fileName+".log");
         }
 
         try{
