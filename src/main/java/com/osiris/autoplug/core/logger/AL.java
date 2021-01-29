@@ -205,6 +205,7 @@ public class AL {
                 fileName = element.getClassName()+"()."+element.getMethodName()+"()";
             }
             else fileName = "No Exception";
+            fileName = fileName.replaceAll("[*<>:?/\"\\|]","");
             File file = new File(DIR_WARN.getAbsolutePath()+"/"+fileName+".log");
             if (!file.exists())
                 file.createNewFile();
@@ -242,6 +243,7 @@ public class AL {
                 fileName = element.getClassName()+"()."+element.getMethodName()+"()";
             }
             else fileName = "No Exception";
+            fileName = fileName.replaceAll("[*<>:?/\"\\|]","");
             File file = new File(DIR_ERROR.getAbsolutePath()+"/"+fileName+".log");
             if (!file.exists())
                 file.createNewFile();
