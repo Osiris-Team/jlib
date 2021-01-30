@@ -53,8 +53,7 @@ public class Message {
 
         if (this.exception!=null){
             this.exMessage = exception.getMessage();
-            if (this.exception.getMessage() == null) this.exMessage = "No further information!";
-            else if (this.exception.getMessage().isEmpty()) this.exMessage = "No further information!";
+            if (this.exMessage == null) this.exMessage = "No further information!";
         }
         else this.exMessage = "No further information!";
         // Example message: [2.12.2020][MyApplication][Main.class][INFO] Some information...

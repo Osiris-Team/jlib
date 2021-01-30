@@ -51,9 +51,14 @@ public class MessageFormatter {
                         .fg(Ansi.Color.CYAN).a("["+msg.getLabel()+"]")
                         .fg(Ansi.Color.YELLOW).a("["+msg.getType()+"]")
                         .reset();
-                ansi = Ansi.ansi()
-                        .fg(Ansi.Color.YELLOW).a(" "+msg.getExMessage()+" Details: "+msg.getContent())
-                        .reset().newline();
+                if (msg.getContent()==null)
+                    ansi = Ansi.ansi()
+                            .fg(Ansi.Color.YELLOW).a(" "+msg.getExMessage())
+                            .reset().newline();
+                else
+                    ansi = Ansi.ansi()
+                            .fg(Ansi.Color.YELLOW).a(" "+msg.getContent()+" Details: "+msg.getExMessage())
+                            .reset().newline();
                 return ""+tags+ansi;
             case ERROR:
                 tags = Ansi.ansi().bg(Ansi.Color.RED)
@@ -63,8 +68,8 @@ public class MessageFormatter {
 
                 final StringBuilder builder = new StringBuilder();
                 builder.append(tags).append(Ansi.ansi().a("[!] ############################## [!]").newline());
-                builder.append(tags).append(Ansi.ansi().a("[!] Message: "+msg.getException().getMessage()+" [!]").newline());
-                builder.append(tags).append(Ansi.ansi().a("[!] Details: "+msg.getContent()+" [!]").newline());
+                builder.append(tags).append(Ansi.ansi().a("[!] Message: "+msg.getContent()+" [!]").newline());
+                builder.append(tags).append(Ansi.ansi().a("[!] Details: "+msg.getExMessage()+" [!]").newline());
 
                 for (StackTraceElement element :
                         msg.getException().getStackTrace()) {
@@ -101,8 +106,8 @@ public class MessageFormatter {
                 return builder.toString();
             case WARN:
                 builder.append(tags).append(" ================================\n");
-                builder.append(tags).append(" Message: " + msg.getExMessage() + "\n");
-                builder.append(tags).append(" Details: " + msg.getContent() + "\n");
+                builder.append(tags).append(" Message: " + msg.getContent() + "\n");
+                builder.append(tags).append(" Details: " + msg.getExMessage() + "\n");
 
                 if (msg.getException()!=null) {
                     if (msg.getException().getCause()!=null)
@@ -117,8 +122,8 @@ public class MessageFormatter {
                 return builder.toString();
             case ERROR:
                 builder.append(tags).append("[!] ############################## [!]\n");
-                builder.append(tags).append("[!] Message: " + msg.getExMessage() + " [!]\n");
-                builder.append(tags).append("[!] Details: " + msg.getContent() + " [!]\n");
+                builder.append(tags).append("[!] Message: " + msg.getContent() + " [!]\n");
+                builder.append(tags).append("[!] Details: " + msg.getExMessage() + " [!]\n");
 
                 for (StackTraceElement element :
                         msg.getException().getStackTrace()) {
