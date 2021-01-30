@@ -52,7 +52,7 @@ public class MessageFormatter {
                         .fg(Ansi.Color.YELLOW).a("["+msg.getType()+"]")
                         .reset();
                 ansi = Ansi.ansi()
-                        .fg(Ansi.Color.YELLOW).a(" "+msg.getContent())
+                        .fg(Ansi.Color.YELLOW).a(" "+msg.getExMessage()+" Details: "+msg.getContent())
                         .reset().newline();
                 return ""+tags+ansi;
             case ERROR:
@@ -63,9 +63,8 @@ public class MessageFormatter {
 
                 final StringBuilder builder = new StringBuilder();
                 builder.append(tags).append(Ansi.ansi().a("[!] ############################## [!]").newline());
-                if (msg.getContent()==null) builder.append(tags).append(Ansi.ansi().a("[!] No details available. [!]").newline());
-                else builder.append(tags).append(Ansi.ansi().a("[!] Details: "+msg.getContent()+" [!]").newline());
                 builder.append(tags).append(Ansi.ansi().a("[!] Message: "+msg.getException().getMessage()+" [!]").newline());
+                builder.append(tags).append(Ansi.ansi().a("[!] Details: "+msg.getContent()+" [!]").newline());
 
                 for (StackTraceElement element :
                         msg.getException().getStackTrace()) {
@@ -102,13 +101,10 @@ public class MessageFormatter {
                 return builder.toString();
             case WARN:
                 builder.append(tags).append(" ================================\n");
-                if (msg.getContent() == null)
-                    builder.append(tags).append(" Details: No details available.\n");
-                else
-                    builder.append(tags).append(" Details: " + msg.getContent() + "\n");
+                builder.append(tags).append(" Message: " + msg.getExMessage() + "\n");
+                builder.append(tags).append(" Details: " + msg.getContent() + "\n");
 
                 if (msg.getException()!=null) {
-                    builder.append(tags).append(" Message: " + msg.getException().getMessage() + "\n");
                     if (msg.getException().getCause()!=null)
                         builder.append(tags).append(" Cause: " + msg.getException().getCause() + "\n");
 
@@ -121,10 +117,8 @@ public class MessageFormatter {
                 return builder.toString();
             case ERROR:
                 builder.append(tags).append("[!] ############################## [!]\n");
-                if (msg.getContent() == null)
-                    builder.append(tags).append("[!] Details: No details available. [!]\n");
-                else builder.append(tags).append("[!] Details: " + msg.getContent() + " [!]\n");
-                builder.append(tags).append("[!] Message: " + msg.getException().getMessage() + " [!]\n");
+                builder.append(tags).append("[!] Message: " + msg.getExMessage() + " [!]\n");
+                builder.append(tags).append("[!] Details: " + msg.getContent() + " [!]\n");
 
                 for (StackTraceElement element :
                         msg.getException().getStackTrace()) {

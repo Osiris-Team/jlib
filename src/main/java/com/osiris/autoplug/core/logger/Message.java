@@ -15,8 +15,9 @@ public class Message {
     private String label = AL.NAME;
     private Class originClass;
     private MessageType type;
-    private String content;
     private Exception exception;
+    private String exMessage;
+    private String content;
 
     public Message(MessageType type, String content){
         this(LocalDateTime.now(), type, content);
@@ -28,6 +29,7 @@ public class Message {
      * a current action/state/progress.
      * This can be used by different output sources
      * like the console, log file and web-socket.
+     * Note: when details is null/empty the exception message will be used instead.
      * @param date
      * @param type
      * @param content
@@ -46,13 +48,28 @@ public class Message {
         if (label!=null) this.label = label;
         this.originClass = originClass;
         this.type = type;
-        this.content = content;
         this.exception = e;
-        if (this.content==null && this.exception!=null)
-            this.content = exception.getMessage();
-        if (this.content==null && this.exception==null)
-            this.content = "No further information!";
+        this.content = content;
+
+        if (this.exception!=null){
+            this.exMessage = exception.getMessage();
+            if (this.exception.getMessage() == null) this.exMessage = "No further information!";
+            else if (this.exception.getMessage().isEmpty()) this.exMessage = "No further information!";
+        }
+        else this.exMessage = "No further information!";
         // Example message: [2.12.2020][MyApplication][Main.class][INFO] Some information...
+    }
+
+    public void setExMessage(String exMessage) {
+        this.exMessage = exMessage;
+    }
+
+    /**
+     * If null/empty returns "No further information!".
+     * Else returns the exceptions message.
+     */
+    public String getExMessage() {
+        return exMessage;
     }
 
     public LocalDateTime getDate() {
@@ -102,4 +119,6 @@ public class Message {
     public void setException(Exception exception) {
         this.exception = exception;
     }
+
+
 }
