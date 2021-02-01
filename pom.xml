@@ -58,7 +58,7 @@
         <dependency>
             <groupId>com.github.Osiris-Team</groupId>
             <artifactId>Better-Thread</artifactId>
-            <version>25c5f144f8</version>
+            <version>1.0</version>
         </dependency>
 
     </dependencies>
