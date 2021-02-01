@@ -9,27 +9,49 @@
 package com.osiris.autoplug.core.logger;
 
 import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiOutputStream;
+import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiPrintStream;
+import org.fusesource.jansi.io.AnsiOutputStream;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
+
 public class LogFileWriter {
     public static File logFile;
-    private static FileOutputStream fos;
-    private static AnsiOutputStream out;
     private static BufferedWriter bw;
 
     public static void createLogWriter(File file){
         logFile = file;
         try{
-            fos = new FileOutputStream(logFile);
-            out = new AnsiOutputStream(fos);
-            bw = new BufferedWriter(new OutputStreamWriter(out));
+            bw = getBufferedWriterForFile(logFile);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Returns a new {@link BufferedWriter} for the given file.
+     * This writer is ANSI free, thus perfectly suitable for log files.
+     * @param file File to write to.
+     */
+    private static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
+        AnsiConsole.systemInstall(); // To make sure that the console is running
+        AnsiPrintStream origOut = AnsiConsole.out();
+        AnsiOutputStream out = new AnsiOutputStream(
+                new FileOutputStream(file),
+                origOut.getMode(),
+                null,
+                origOut.getType(),
+                origOut.getColors(),
+                Charset.defaultCharset(),
+                null,
+                null,
+                true
+        );
+        return new BufferedWriter(new OutputStreamWriter(out));
     }
 
     public static void close(){
