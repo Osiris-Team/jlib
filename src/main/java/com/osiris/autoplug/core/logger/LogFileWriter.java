@@ -10,14 +10,12 @@ package com.osiris.autoplug.core.logger;
 
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
-import org.fusesource.jansi.AnsiPrintStream;
-import org.fusesource.jansi.io.AnsiOutputStream;
+import org.fusesource.jansi.AnsiOutputStream;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 
 public class LogFileWriter {
     public static File logFile;
@@ -39,6 +37,17 @@ public class LogFileWriter {
      */
     private static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
         AnsiConsole.systemInstall(); // To make sure that the console is running
+        AnsiOutputStream out = new AnsiOutputStream(new FileOutputStream(file));
+        return new BufferedWriter(new OutputStreamWriter(out));
+    }
+
+    /**
+     * Returns a new {@link BufferedWriter} for the given file.
+     * This writer is ANSI free, thus perfectly suitable for log files.
+     */
+    /* ONLY FOR JANSI v2+
+    private static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
+        AnsiConsole.systemInstall(); // To make sure that the console is running
         AnsiPrintStream origOut = AnsiConsole.out();
         AnsiOutputStream out = new AnsiOutputStream(
                 new FileOutputStream(file),
@@ -53,6 +62,8 @@ public class LogFileWriter {
         );
         return new BufferedWriter(new OutputStreamWriter(out));
     }
+
+     */
 
     public static void close(){
         try{
