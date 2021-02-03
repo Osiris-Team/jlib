@@ -54,12 +54,21 @@ public class Message {
         // Example message: [2.12.2020][MyApplication][Main.class][INFO] Some information...
     }
 
-    public void setExMessage(String exMessage) {
-        this.exMessage = exMessage;
+    public Exception getException() {
+        return exception;
     }
 
     public String getExMessage() {
+        if (exception!=null) exMessage = exception.getMessage();
         return exMessage;
+    }
+
+    public void setException(Exception exception) {
+        this.exception = exception;
+    }
+
+    public void setExMessage(String exMessage) {
+        this.exMessage = exMessage;
     }
 
     public LocalDateTime getDate() {
@@ -102,13 +111,7 @@ public class Message {
         this.content = content;
     }
 
-    public Exception getException() {
-        return exception;
-    }
 
-    public void setException(Exception exception) {
-        this.exception = exception;
-    }
 
 
 }
