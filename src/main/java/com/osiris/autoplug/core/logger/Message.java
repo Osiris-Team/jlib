@@ -50,12 +50,7 @@ public class Message {
         this.type = type;
         this.exception = e;
         this.content = content;
-
-        if (this.exception!=null){
-            this.exMessage = exception.getMessage();
-            if (this.exMessage == null) this.exMessage = "No further information!";
-        }
-        else this.exMessage = "No further information!";
+        if (this.exception!=null) this.exMessage = exception.getMessage();
         // Example message: [2.12.2020][MyApplication][Main.class][INFO] Some information...
     }
 
@@ -63,10 +58,6 @@ public class Message {
         this.exMessage = exMessage;
     }
 
-    /**
-     * If null/empty returns "No further information!".
-     * Else returns the exceptions message.
-     */
     public String getExMessage() {
         return exMessage;
     }

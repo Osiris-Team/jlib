@@ -14,7 +14,7 @@
 
     <groupId>com.osiris.autoplug.core</groupId>
     <artifactId>autoplug-core</artifactId>
-    <version>4.6</version>
+    <version>4.7</version>
     <packaging>jar</packaging>
 
     <name>AutoPlug-Core</name>
@@ -58,7 +58,7 @@
         <dependency>
             <groupId>com.github.Osiris-Team</groupId>
             <artifactId>Better-Thread</artifactId>
-            <version>1.3</version>
+            <version>1.5</version>
         </dependency>
 
     </dependencies>
