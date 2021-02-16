@@ -80,6 +80,7 @@ public class MessageFormatter {
                 builder.append(tags).append(Ansi.ansi().a("[!] ############################## [!]").newline());
                 builder.append(tags).append(Ansi.ansi().a("[!] Message: "+msg.getContent()+" [!]").newline());
                 builder.append(tags).append(Ansi.ansi().a("[!] Details: "+msg.getExMessage()+" [!]").newline());
+                builder.append(tags).append(Ansi.ansi().a("[!] Type: " + msg.getException().getClass().getCanonicalName() + " [!]").newline());
 
                 for (StackTraceElement element :
                         msg.getException().getStackTrace()) {
@@ -119,7 +120,9 @@ public class MessageFormatter {
                 builder.append(tags).append(" Message: " + msg.getContent() + "\n");
                 builder.append(tags).append(" Details: " + msg.getExMessage() + "\n");
 
+
                 if (msg.getException()!=null) {
+                    builder.append(tags).append(" Type: " + msg.getException().getClass().getCanonicalName() + "\n");
                     builder.append(tags).append(" Stacktrace: \n");
 
                     for (StackTraceElement element :
@@ -133,6 +136,7 @@ public class MessageFormatter {
                 builder.append(tags).append("[!] ############################## [!]\n");
                 builder.append(tags).append("[!] Message: " + msg.getContent() + " [!]\n");
                 builder.append(tags).append("[!] Details: " + msg.getExMessage() + " [!]\n");
+                builder.append(tags).append("[!] Type: " + msg.getException().getClass().getCanonicalName() + " [!]\n");
                 builder.append(tags).append("[!] Stacktrace: [!]\n ");
                 for (StackTraceElement element :
                         msg.getException().getStackTrace()) {
