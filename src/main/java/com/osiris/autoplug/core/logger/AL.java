@@ -10,36 +10,61 @@ package com.osiris.autoplug.core.logger;
 
 import com.osiris.dyml.DYModule;
 import com.osiris.dyml.DreamYaml;
+import com.osiris.dyml.watcher.DYAction;
+import com.osiris.dyml.watcher.DYWatcher;
 import org.fusesource.jansi.AnsiConsole;
+import org.jline.console.ArgDesc;
+import org.jline.console.CmdDesc;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.AttributedString;
+import org.jline.utils.Display;
+import org.jline.widget.AutosuggestionWidgets;
+import org.jline.widget.TailTipWidgets;
+import org.w3c.dom.Attr;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * The AL (AutoPlugLogger) can be
  * compared to a soviet mailing center.
  * It receives raw messages from the system
- * and forwards them formatted to the user.
+ * and forwards them censored or better 'formatted' to the user.
  * The user has multiple ways of getting information (console, log file and online),
  * which all have different capabilities of displaying information.
  * That's why we need this class.
  */
 public class AL {
     public static String NAME;
+    public static Terminal TERMINAL;
+    public static Display DISPLAY;
+    public static LineReader LINE_READER;
     public static File DIR;
     public static File DIR_FULL;
     public static File DIR_WARN;
     public static File DIR_ERROR;
     public static File LOG_LATEST;
+    public static List<ALCommand> COMMANDS = new ArrayList<>();
     public static boolean isDebugEnabled = false;
+    public static boolean isStarted = false;
+
 
     /**
      * Starts the logger with defaults:
@@ -56,21 +81,41 @@ public class AL {
      * Initialises the AL (AutoPlugLogger).
      * First it checks if debug is enabled, then
      * installs the AnsiConsole and creates the log file.
+     * This method can only be called once. Multiple calls won't do anything.
      * @param name this loggers name.
      * @param loggerConfig the logger config
      * @param loggerDir the directory where logs should be stored
      */
     public void start(String name, DreamYaml loggerConfig, File loggerDir){
+        if (isStarted) return;
+        isStarted = true;
         NAME = name;
         try {
             // First check if the debug option is enabled. This has to be done like this, because the GeneralConfig class uses this Logger to display data.
             loggerConfig.load();
             DYModule debug = loggerConfig.add("debug").setDefValue("false");
-            isDebugEnabled = debug.asBoolean();
             loggerConfig.save();
+            isDebugEnabled = debug.asBoolean();
 
-            // Enable ansi for the current console
-            AnsiConsole.systemInstall();
+            DYWatcher watcher = new DYWatcher(false);
+            watcher.start();
+            watcher.addYaml(loggerConfig);
+
+            DYAction action = new DYAction(loggerConfig);
+            action.setRunnable(()->{
+                if(action.getEventKind().equals(StandardWatchEventKinds.ENTRY_MODIFY))
+                    try{
+                        isDebugEnabled = action.getYaml().add("debug").asBoolean();
+                    } catch (Exception exception) {
+                        exception.printStackTrace();
+                    }
+            });
+            watcher.addAction(action);
+
+
+            TERMINAL = TerminalBuilder.terminal();
+            DISPLAY = new Display(TERMINAL, true);
+
 
             DIR = loggerDir;
             if (!loggerDir.exists())
@@ -145,6 +190,39 @@ public class AL {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+    }
+
+
+    public static void setCommands(List<ALCommand> commands){
+        Objects.requireNonNull(commands);
+        COMMANDS = commands;
+        commandsToCompleters();
+    }
+
+    private static void commandsToCompleters(){
+        LINE_READER = LineReaderBuilder.builder()
+                .terminal(TERMINAL)
+                .build();
+
+        // Create TailTip widgets
+        // Put each command with its description into the widget list
+        Map<String, CmdDesc> tailTips = new HashMap<>();
+        COMMANDS.forEach(c->{
+            List<AttributedString> mainDesc = Arrays.asList(new AttributedString(c.getName()));
+            Map<String, List<AttributedString>> widgetOpts = new HashMap<>();
+            widgetOpts.put(c.getName(), Arrays.asList(new AttributedString(c.getDescription())));
+            tailTips.put(c.getName(), new CmdDesc(mainDesc, ArgDesc.doArgNames(Arrays.asList("")), widgetOpts));
+        });
+
+
+        // Create tailtip widgets that uses description window size 5 and
+        // does not display suggestions after the cursor
+        TailTipWidgets tailtipWidgets = new TailTipWidgets(LINE_READER, tailTips, 5, TailTipWidgets.TipType.COMBINED);
+        // Enable autosuggestions
+        tailtipWidgets.enable();
+
+        //AutosuggestionWidgets autosuggestionWidgets = new AutosuggestionWidgets(LINE_READER);
+        //autosuggestionWidgets.enable();
     }
 
     public static synchronized void info(String s) {
