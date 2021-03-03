@@ -21,6 +21,7 @@ import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.impl.completer.AggregateCompleter;
 import org.jline.reader.impl.completer.ArgumentCompleter;
 import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Size;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedString;
@@ -105,7 +106,8 @@ public class AL {
             action.setRunnable(()->{
                 if(action.getEventKind().equals(StandardWatchEventKinds.ENTRY_MODIFY))
                     try{
-                        isDebugEnabled = action.getYaml().add("debug").asBoolean();
+                        action.getYaml().reload();
+                        isDebugEnabled = debug.asBoolean();
                     } catch (Exception exception) {
                         exception.printStackTrace();
                     }
@@ -114,8 +116,7 @@ public class AL {
 
 
             TERMINAL = TerminalBuilder.terminal();
-            DISPLAY = new Display(TERMINAL, true);
-
+            resize();
 
             DIR = loggerDir;
             if (!loggerDir.exists())
@@ -192,6 +193,14 @@ public class AL {
             }
     }
 
+    /**
+     * If there were new lines written to the console this needs to be called.
+     */
+    private static void resize(){
+        DISPLAY = new Display(TERMINAL, false);
+        Size size = TERMINAL.getSize(); // Need to initialize the size on the display with
+        DISPLAY.resize(size.getRows(), size.getColumns());
+    }
 
     public static void setCommands(List<ALCommand> commands){
         Objects.requireNonNull(commands);
