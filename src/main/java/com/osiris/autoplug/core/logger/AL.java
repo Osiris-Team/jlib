@@ -12,10 +12,7 @@ import com.osiris.dyml.DYModule;
 import com.osiris.dyml.DreamYaml;
 import com.osiris.dyml.watcher.DYAction;
 import com.osiris.dyml.watcher.DYWatcher;
-import jdk.internal.org.jline.reader.LineReader;
-import jdk.internal.org.jline.reader.LineReaderBuilder;
 import org.fusesource.jansi.AnsiConsole;
-import org.w3c.dom.Attr;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -28,7 +25,6 @@ import java.nio.file.attribute.FileTime;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
 
 /**
  * The AL (AutoPlugLogger) can be
