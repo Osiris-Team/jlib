@@ -8,10 +8,6 @@
 
 package com.osiris.autoplug.core.logger;
 
-import com.osiris.dyml.DYModule;
-import com.osiris.dyml.DreamYaml;
-import com.osiris.dyml.watcher.DYAction;
-import com.osiris.dyml.watcher.DYWatcher;
 import org.fusesource.jansi.AnsiConsole;
 
 import java.io.BufferedWriter;
@@ -19,7 +15,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Clock;
@@ -52,7 +47,7 @@ public class AL {
      */
     public void start(){
         start("Logger",
-                new DreamYaml(System.getProperty("user.dir")+"/logger-config.yml"),
+                false,
                 new File(System.getProperty("user.dir")+"/logs")
                 );
     }
@@ -63,36 +58,16 @@ public class AL {
      * installs the AnsiConsole and creates the log file.
      * This method can only be called once. Multiple calls won't do anything.
      * @param name this loggers name.
-     * @param loggerConfig the logger config
+     * @param debug should the debug log get displayed. Disabled by default.
      * @param loggerDir the directory where logs should be stored
      */
-    public void start(String name, DreamYaml loggerConfig, File loggerDir){
+    public void start(String name, boolean debug, File loggerDir){
         if (isStarted) return;
         isStarted = true;
         NAME = name;
+        isDebugEnabled = debug;
+
         try {
-            // First check if the debug option is enabled. This has to be done like this, because the GeneralConfig class uses this Logger to display data.
-            loggerConfig.load();
-            DYModule debug = loggerConfig.add("debug").setDefValue("false");
-            loggerConfig.save();
-            isDebugEnabled = debug.asBoolean();
-
-            DYWatcher watcher = new DYWatcher(false);
-            watcher.start();
-            watcher.addYaml(loggerConfig);
-
-            DYAction action = new DYAction(loggerConfig);
-            action.setRunnable(()->{
-                if(action.getEventKind().equals(StandardWatchEventKinds.ENTRY_MODIFY))
-                    try{
-                        action.getYaml().reload();
-                        isDebugEnabled = debug.asBoolean();
-                    } catch (Exception exception) {
-                        exception.printStackTrace();
-                    }
-            });
-            watcher.addAction(action);
-
             DIR = loggerDir;
             if (!loggerDir.exists())
                 loggerDir.mkdirs();
@@ -112,7 +87,7 @@ public class AL {
             if (!DIR_ERROR.exists())
                 DIR_ERROR.mkdirs();
 
-            LOG_LATEST = new File(DIR_FULL.getAbsolutePath()+"/latest.log");;
+            LOG_LATEST = new File(DIR_FULL.getAbsolutePath()+"/A1-latest.log");
 
             // If latest_log file from last session exists and has information in it, we first duplicate that file and then replace with new blank file
             try{
@@ -153,19 +128,7 @@ public class AL {
     public void stop(){
         debug(this.getClass(),"Stopped "+NAME);
         AnsiConsole.systemUninstall();
-
-        if (LOG_LATEST.exists())
-            try {
-                File savedLog = new File(DIR_FULL.getAbsolutePath()+"/"+MessageFormatter.dtf_long.format(LocalDateTime.now())+".log");
-                if (!savedLog.exists()) savedLog.createNewFile();
-
-                Files.copy(LOG_LATEST.toPath(), savedLog.toPath(),
-                        StandardCopyOption.REPLACE_EXISTING);
-
-                LogFileWriter.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        LogFileWriter.close();
     }
 
 

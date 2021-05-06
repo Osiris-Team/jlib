@@ -29,7 +29,7 @@ public class JsonTools {
      * @return JsonElement
      * @throws Exception When status code other than 200.
      */
-    public JsonElement getJsonElement(String input_url) throws Exception, HttpErrorException {
+    public JsonElement getJsonElement(String input_url) throws Exception {
 
         //Requests and connections
         final URL url = new URL(input_url);
@@ -50,7 +50,7 @@ public class JsonTools {
 
     }
 
-    public JsonArray getJsonArray(String url) throws Exception, HttpErrorException{
+    public JsonArray getJsonArray(String url) throws Exception {
         JsonElement element = getJsonElement(url);
         if (element!=null && element.isJsonArray()){
             return element.getAsJsonArray();
@@ -65,7 +65,7 @@ public class JsonTools {
      * @param url The url where to find the json file.
      * @return A list with JsonObjects or null if there was a error with the url.
      */
-    public List<JsonObject> getJsonArrayAsList(String url) throws Exception, HttpErrorException{
+    public List<JsonObject> getJsonArrayAsList(String url) throws Exception {
         List<JsonObject> objectList = new ArrayList<>();
         JsonElement element = getJsonElement(url);
         if (element!=null && element.isJsonArray()){
@@ -86,7 +86,7 @@ public class JsonTools {
      * @param url The url where to find the json file.
      * @return A JsonObject or null if there was a error with the url.
      */
-    public JsonObject getJsonObject(String url) throws Exception, HttpErrorException{
+    public JsonObject getJsonObject(String url) throws Exception {
         JsonElement element = getJsonElement(url);
         if (element!=null && element.isJsonObject()){
             return element.getAsJsonObject();

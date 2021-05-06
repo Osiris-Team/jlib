@@ -5,7 +5,7 @@ import java.text.DecimalFormat;
 public class TimeStopper {
     private long time1=0;
     private long time2=0;
-    private DecimalFormat df = new DecimalFormat();
+    private final DecimalFormat df = new DecimalFormat();
 
     public void start(){time1 = System.nanoTime();}
     public void stop(){time2 = System.nanoTime();}
