@@ -8,6 +8,7 @@
 
 package com.osiris.autoplug.core.logger;
 
+import com.osiris.autoplug.core.events.MessageEvent;
 import org.fusesource.jansi.AnsiConsole;
 
 import java.io.BufferedWriter;
@@ -20,6 +21,8 @@ import java.nio.file.attribute.FileTime;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The AL (AutoPlugLogger) can be
@@ -39,6 +42,13 @@ public class AL {
     public static File LOG_LATEST;
     public static boolean isDebugEnabled = false;
     public static boolean isStarted = false;
+
+    // Basically lists that contain code to run when the specific event happens
+    public static List<MessageEvent<Message>> actionsOnMessageEvent = new CopyOnWriteArrayList<>();
+    public static List<MessageEvent<Message>> actionsOnInfoMessageEvent = new CopyOnWriteArrayList<>();
+    public static List<MessageEvent<Message>> actionsOnDebugMessageEvent = new CopyOnWriteArrayList<>();
+    public static List<MessageEvent<Message>> actionsOnWarnMessageEvent = new CopyOnWriteArrayList<>();
+    public static List<MessageEvent<Message>> actionsOnErrorMessageEvent = new CopyOnWriteArrayList<>();
 
 
     /**
@@ -87,7 +97,7 @@ public class AL {
             if (!DIR_ERROR.exists())
                 DIR_ERROR.mkdirs();
 
-            LOG_LATEST = new File(DIR_FULL.getAbsolutePath()+"/A1-latest.log");
+            LOG_LATEST = new File(DIR_FULL.getAbsolutePath()+"/0A1-latest.log");
 
             // If latest_log file from last session exists and has information in it, we first duplicate that file and then replace with new blank file
             try{
@@ -97,7 +107,7 @@ public class AL {
                     FileTime time = attrs.lastModifiedTime();
 
                     File savedLog = new File(DIR_FULL.getAbsolutePath()+ "/"
-                            + DateTimeFormatter.ofPattern("dd-MM-yyyy HH-mm-ss").format(
+                            + DateTimeFormatter.ofPattern("yyyy-MM-dd  ss HH mm").format(
                                     LocalDateTime.ofInstant(
                                             time.toInstant(), Clock.systemDefaultZone().getZone()))+".log");
 
@@ -133,16 +143,18 @@ public class AL {
 
 
     public static synchronized void info(String s) {
-        final Message msg = new Message(MessageType.INFO, s);
+        final Message msg = new Message(Message.Type.INFO, s);
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
         final String s2 = MessageFormatter.formatForFile(msg);
 
         output(s1);
         LogFileWriter.writeToLog(s2);
+        actionsOnMessageEvent.forEach(event -> event.executeOnEvent(msg));
+        actionsOnInfoMessageEvent.forEach(event -> event.executeOnEvent(msg));
     }
 
     public static synchronized void debug(Class c, String text) {
-        final Message msg = new Message(MessageType.DEBUG, text);
+        final Message msg = new Message(Message.Type.DEBUG, text);
         msg.setOriginClass(c);
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
         final String s2 = MessageFormatter.formatForFile(msg);
@@ -151,6 +163,8 @@ public class AL {
             output(s1);
         }
         LogFileWriter.writeToLog(s2);
+        actionsOnMessageEvent.forEach(event -> event.executeOnEvent(msg));
+        actionsOnDebugMessageEvent.forEach(event -> event.executeOnEvent(msg));
     }
 
     public static synchronized void warn(Exception e){
@@ -174,7 +188,7 @@ public class AL {
     }
 
     public static synchronized void warn(Class c, Exception e, String text){
-        final Message msg = new Message(MessageType.WARN, text);
+        final Message msg = new Message(Message.Type.WARN, text);
         msg.setOriginClass(c);
         msg.setException(e);
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
@@ -201,6 +215,8 @@ public class AL {
             exception.printStackTrace();
             System.err.println("Error for file: "+fileName+".log");
         }
+        actionsOnMessageEvent.forEach(event -> event.executeOnEvent(msg));
+        actionsOnWarnMessageEvent.forEach(event -> event.executeOnEvent(msg));
     }
 
     public static synchronized void error(Exception e){
@@ -213,7 +229,7 @@ public class AL {
      */
     public static synchronized void error(String errorTitle, Exception e) {
 
-        final Message msg = new Message(MessageType.ERROR, errorTitle);
+        final Message msg = new Message(Message.Type.ERROR, errorTitle);
         msg.setException(e);
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
         final String s2 = MessageFormatter.formatForFile(msg);
@@ -246,6 +262,8 @@ public class AL {
             exception.printStackTrace();
         }
 
+        actionsOnMessageEvent.forEach(event -> event.executeOnEvent(msg));
+        actionsOnErrorMessageEvent.forEach(event -> event.executeOnEvent(msg));
         System.exit(0);
     }
 

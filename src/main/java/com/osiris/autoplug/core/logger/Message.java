@@ -14,12 +14,16 @@ public class Message {
     private LocalDateTime date;
     private String label = AL.NAME;
     private Class originClass;
-    private MessageType type;
+    private Type type;
     private Exception exception;
     private String exMessage;
     private String content;
 
-    public Message(MessageType type, String content){
+    public enum Type {
+        INFO, DEBUG, WARN, ERROR
+    }
+
+    public Message(Type type, String content){
         this(LocalDateTime.now(), type, content);
     }
 
@@ -34,16 +38,16 @@ public class Message {
      * @param type
      * @param content
      */
-    public Message(LocalDateTime date, MessageType type, String content){
+    public Message(LocalDateTime date, Type type, String content){
         this(date, null, type, content);
     }
 
 
-    public Message(LocalDateTime date, String label, MessageType type, String content){
+    public Message(LocalDateTime date, String label, Type type, String content){
         this(date, label, null, type, content, null);
     }
 
-    public Message(LocalDateTime date, String label, Class originClass, MessageType type, String content, Exception e) {
+    public Message(LocalDateTime date, String label, Class originClass, Type type, String content, Exception e) {
         this.date = date;
         if (label!=null) this.label = label;
         this.originClass = originClass;
@@ -95,11 +99,11 @@ public class Message {
         this.originClass = originClass;
     }
 
-    public MessageType getType() {
+    public Type getType() {
         return type;
     }
 
-    public void setType(MessageType type) {
+    public void setType(Type type) {
         this.type = type;
     }
 
@@ -110,8 +114,5 @@ public class Message {
     public void setContent(String content) {
         this.content = content;
     }
-
-
-
 
 }
