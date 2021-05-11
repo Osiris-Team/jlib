@@ -36,7 +36,7 @@ public class LogFileWriter {
      * @param file File to write to.
      */
     private static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
-        AnsiConsole.systemInstall(); // To make sure that the console is running
+        //AnsiConsole.systemInstall(); // To make sure that the console is running
         AnsiOutputStream out = new AnsiOutputStream(new FileOutputStream(file));
         return new BufferedWriter(new OutputStreamWriter(out));
     }
