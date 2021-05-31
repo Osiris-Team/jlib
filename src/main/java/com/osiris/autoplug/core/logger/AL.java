@@ -24,6 +24,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static com.osiris.betterthread.Constants.TERMINAL;
+
 /**
  * The AL (AutoPlugLogger) can be
  * compared to a soviet mailing center.
@@ -97,7 +99,7 @@ public class AL {
             if (!DIR_ERROR.exists())
                 DIR_ERROR.mkdirs();
 
-            LOG_LATEST = new File(DIR_FULL.getAbsolutePath()+"/0A1-latest.log");
+            LOG_LATEST = new File(DIR_FULL.getAbsolutePath()+"/00A-latest.log");
 
             // If latest_log file from last session exists and has information in it, we first duplicate that file and then replace with new blank file
             try{
@@ -107,7 +109,7 @@ public class AL {
                     FileTime time = attrs.lastModifiedTime();
 
                     File savedLog = new File(DIR_FULL.getAbsolutePath()+ "/"
-                            + DateTimeFormatter.ofPattern("yyyy-MM-dd  ss HH mm").format(
+                            + DateTimeFormatter.ofPattern("yyyy-MM-dd  ss-HH-mm").format(
                                     LocalDateTime.ofInstant(
                                             time.toInstant(), Clock.systemDefaultZone().getZone()))+".log");
 
@@ -228,6 +230,7 @@ public class AL {
      * This only should be used if program isn't able to continue after this error.
      */
     public static synchronized void error(String errorTitle, Exception e) {
+        //TERMINAL.pause();
 
         final Message msg = new Message(Message.Type.ERROR, errorTitle);
         msg.setException(e);
