@@ -230,8 +230,6 @@ public class AL {
      * This only should be used if program isn't able to continue after this error.
      */
     public static synchronized void error(String errorTitle, Exception e) {
-        //TERMINAL.pause();
-
         final Message msg = new Message(Message.Type.ERROR, errorTitle);
         msg.setException(e);
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
