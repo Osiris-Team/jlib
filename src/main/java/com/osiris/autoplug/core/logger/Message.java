@@ -19,11 +19,7 @@ public class Message {
     private String exMessage;
     private String content;
 
-    public enum Type {
-        INFO, DEBUG, WARN, ERROR
-    }
-
-    public Message(Type type, String content){
+    public Message(Type type, String content) {
         this(LocalDateTime.now(), type, content);
     }
 
@@ -34,27 +30,28 @@ public class Message {
      * This can be used by different output sources
      * like the console, log file and web-socket.
      * Note: when details is null/empty the exception message will be used instead.
+     *
      * @param date
      * @param type
      * @param content
      */
-    public Message(LocalDateTime date, Type type, String content){
+    public Message(LocalDateTime date, Type type, String content) {
         this(date, null, type, content);
     }
 
-
-    public Message(LocalDateTime date, String label, Type type, String content){
+    public Message(LocalDateTime date, String label, Type type, String content) {
         this(date, label, null, type, content, null);
     }
 
+
     public Message(LocalDateTime date, String label, Class originClass, Type type, String content, Exception e) {
         this.date = date;
-        if (label!=null) this.label = label;
+        if (label != null) this.label = label;
         this.originClass = originClass;
         this.type = type;
         this.exception = e;
         this.content = content;
-        if (this.exception!=null) this.exMessage = exception.getMessage();
+        if (this.exception != null) this.exMessage = exception.getMessage();
         // Example message: [2.12.2020][MyApplication][Main.class][INFO] Some information...
     }
 
@@ -62,13 +59,13 @@ public class Message {
         return exception;
     }
 
-    public String getExMessage() {
-        if (exception!=null) exMessage = exception.getMessage();
-        return exMessage;
-    }
-
     public void setException(Exception exception) {
         this.exception = exception;
+    }
+
+    public String getExMessage() {
+        if (exception != null) exMessage = exception.getMessage();
+        return exMessage;
     }
 
     public void setExMessage(String exMessage) {
@@ -113,6 +110,10 @@ public class Message {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public enum Type {
+        INFO, DEBUG, WARN, ERROR
     }
 
 }
