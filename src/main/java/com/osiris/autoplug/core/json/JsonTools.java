@@ -13,8 +13,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.osiris.autoplug.core.json.exceptions.HttpErrorException;
+import com.osiris.autoplug.core.json.exceptions.WrongJsonTypeException;
 
-import java.io.InputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -30,32 +31,37 @@ public class JsonTools {
      * @return JsonElement
      * @throws Exception When status code other than 200.
      */
-    public JsonElement getJsonElement(String input_url) throws Exception {
+    public JsonElement getJsonElement(String input_url) throws IOException, HttpErrorException {
 
-        //Requests and connections
-        final URL url = new URL(input_url);
-        final HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online");
-        con.connect();
-        InputStream in;
-        InputStreamReader inr;
+        HttpURLConnection con = null;
+        JsonElement element;
+        try {
+            con = (HttpURLConnection) new URL(input_url).openConnection();
+            con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online");
+            con.connect();
 
-        if (con.getResponseCode() == 200) {
-            in = con.getInputStream();
-            inr = new InputStreamReader(in);
-            return JsonParser.parseReader(inr);
-        } else {
-            throw new HttpErrorException(con.getResponseCode(), con.getResponseMessage(), "Couldn't get the json file from: " + input_url);
+            if (con.getResponseCode() == 200) {
+                try (InputStreamReader inr = new InputStreamReader(con.getInputStream())) {
+                    element = JsonParser.parseReader(inr);
+                }
+            } else {
+                throw new HttpErrorException(con.getResponseCode(), con.getResponseMessage(), "Couldn't get the json file from: " + input_url);
+            }
+        } catch (IOException | HttpErrorException e) {
+            if (con != null) con.disconnect();
+            throw e;
+        } finally {
+            if (con != null) con.disconnect();
         }
-
+        return element;
     }
 
-    public JsonArray getJsonArray(String url) throws Exception {
+    public JsonArray getJsonArray(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
         JsonElement element = getJsonElement(url);
         if (element != null && element.isJsonArray()) {
             return element.getAsJsonArray();
         } else {
-            throw new Exception("Its not a json array! Check it out -> " + url);
+            throw new WrongJsonTypeException("Its not a json array! Check it out -> " + url);
         }
     }
 
@@ -65,7 +71,7 @@ public class JsonTools {
      * @param url The url where to find the json file.
      * @return A list with JsonObjects or null if there was a error with the url.
      */
-    public List<JsonObject> getJsonArrayAsList(String url) throws Exception {
+    public List<JsonObject> getJsonArrayAsList(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
         List<JsonObject> objectList = new ArrayList<>();
         JsonElement element = getJsonElement(url);
         if (element != null && element.isJsonArray()) {
@@ -76,7 +82,7 @@ public class JsonTools {
             }
             return objectList;
         } else {
-            throw new Exception("Its not a json array! Check it out -> " + url);
+            throw new WrongJsonTypeException("Its not a json array! Check it out -> " + url);
         }
     }
 
@@ -86,12 +92,12 @@ public class JsonTools {
      * @param url The url where to find the json file.
      * @return A JsonObject or null if there was a error with the url.
      */
-    public JsonObject getJsonObject(String url) throws Exception {
+    public JsonObject getJsonObject(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
         JsonElement element = getJsonElement(url);
         if (element != null && element.isJsonObject()) {
             return element.getAsJsonObject();
         } else {
-            throw new Exception("Its not a json object! Check it out -> " + url);
+            throw new WrongJsonTypeException("Its not a json object! Check it out -> " + url);
         }
     }
 
