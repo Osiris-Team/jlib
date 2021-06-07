@@ -13,10 +13,7 @@ import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.AnsiPrintStream;
 import org.fusesource.jansi.io.AnsiOutputStream;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.Charset;
 
 public class LogFileWriter {
@@ -53,10 +50,18 @@ public class LogFileWriter {
      * This writer is ANSI free, thus perfectly suitable for log files.
      */
     private static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
-        AnsiConsole.systemInstall(); // To make sure that the console is running
+        return getBufferedWriterForOutputStream(new FileOutputStream(file));
+    }
+
+    /**
+     * ONLY FOR JANSI v2+ <br>
+     * Returns a new {@link BufferedWriter} for the given file.
+     * This writer is ANSI free, thus perfectly suitable for log files.
+     */
+    private static BufferedWriter getBufferedWriterForOutputStream(OutputStream os) throws Exception {
         AnsiPrintStream origOut = AnsiConsole.out();
         AnsiOutputStream out = new AnsiOutputStream(
-                new FileOutputStream(file),
+                os,
                 origOut::getTerminalWidth,
                 origOut.getMode(),
                 null,
