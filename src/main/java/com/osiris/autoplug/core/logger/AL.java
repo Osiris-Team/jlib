@@ -234,7 +234,7 @@ public class AL {
                     FileTime time = attrs.lastModifiedTime();
 
                     File savedLog = new File(DIR_FULL.getAbsolutePath() + "/"
-                            + DateTimeFormatter.ofPattern("yyyy-MM-dd  ss-HH-mm").format(
+                            + DateTimeFormatter.ofPattern("yyyy-MM-dd  HH-mm-ss").format(
                             LocalDateTime.ofInstant(
                                     time.toInstant(), Clock.systemDefaultZone().getZone())) + ".log");
 
