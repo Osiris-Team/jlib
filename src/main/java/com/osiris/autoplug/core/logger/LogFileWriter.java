@@ -17,13 +17,13 @@ import java.io.*;
 import java.nio.charset.Charset;
 
 public class LogFileWriter {
-    public static File logFile;
-    private static BufferedWriter bw;
+    public static File LOG_FILE;
+    public static BufferedWriter BUFFERED_WRITER;
 
-    public static void createLogWriter(File file) {
-        logFile = file;
+    public static void setLogWriterForFile(File file) {
+        LOG_FILE = file;
         try {
-            bw = getBufferedWriterForFile(logFile);
+            BUFFERED_WRITER = getBufferedWriterForFile(LOG_FILE);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -78,8 +78,8 @@ public class LogFileWriter {
 
     public static void close() {
         try {
-            if (bw != null)
-                bw.close();
+            if (BUFFERED_WRITER != null)
+                BUFFERED_WRITER.close();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -91,9 +91,9 @@ public class LogFileWriter {
 
     public static synchronized void writeToLog(String string) {
         try {
-            bw.write(string);
+            BUFFERED_WRITER.write(string);
             // bw.newLine(); Please include the next line character in the string
-            bw.flush();
+            BUFFERED_WRITER.flush();
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -27,7 +27,7 @@ class LogFileWriterTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        LogFileWriter.createLogWriter(file);
+        LogFileWriter.setLogWriterForFile(file);
         LogFileWriter.writeToLog(Ansi.ansi().fg(Ansi.Color.BLUE).a("Hello!"));
         assertTrue(file.length()>0);
     }

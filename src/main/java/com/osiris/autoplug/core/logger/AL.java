@@ -251,7 +251,7 @@ public class AL {
             LOG_LATEST.createNewFile();
 
             //Create writer after file exists
-            LogFileWriter.createLogWriter(LOG_LATEST);
+            LogFileWriter.setLogWriterForFile(LOG_LATEST);
 
             debug(this.getClass(), "Started Logger(" + name + ")");
         } catch (Exception e) {
