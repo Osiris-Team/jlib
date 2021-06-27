@@ -8,9 +8,7 @@
 
 package com.osiris.autoplug.core.logger;
 
-import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
-import org.fusesource.jansi.AnsiPrintStream;
+import org.fusesource.jansi.*;
 import org.fusesource.jansi.io.AnsiOutputStream;
 
 import java.io.*;
@@ -37,7 +35,7 @@ public class LogFileWriter {
      * @param file File to write to.
      */
     /*
-    private static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
+    public static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
         //AnsiConsole.systemInstall(); // To make sure that the console is running
         AnsiOutputStream out = new AnsiOutputStream(new FileOutputStream(file));
         return new BufferedWriter(new OutputStreamWriter(out));
@@ -49,7 +47,7 @@ public class LogFileWriter {
      * Returns a new {@link BufferedWriter} for the given file.
      * This writer is ANSI free, thus perfectly suitable for log files.
      */
-    private static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
+    public static BufferedWriter getBufferedWriterForFile(File file) throws Exception {
         return getBufferedWriterForOutputStream(new FileOutputStream(file));
     }
 
@@ -58,20 +56,17 @@ public class LogFileWriter {
      * Returns a new {@link BufferedWriter} for the given file.
      * This writer is ANSI free, thus perfectly suitable for log files.
      */
-    private static BufferedWriter getBufferedWriterForOutputStream(OutputStream os) throws Exception {
-        AnsiPrintStream origOut = AnsiConsole.out();
-        AnsiOutputStream out = new AnsiOutputStream(
-                os,
-                origOut::getTerminalWidth,
-                origOut.getMode(),
+    public static BufferedWriter getBufferedWriterForOutputStream(OutputStream os) {
+        AnsiOutputStream out = new AnsiOutputStream(os,
+                () -> Integer.MAX_VALUE,
+                AnsiMode.Strip,
                 null,
-                origOut.getType(),
-                origOut.getColors(),
+                AnsiType.Native,
+                AnsiColors.Colors16,
                 Charset.defaultCharset(),
                 null,
                 null,
-                true
-        );
+                true);
         return new BufferedWriter(new OutputStreamWriter(out));
     }
 

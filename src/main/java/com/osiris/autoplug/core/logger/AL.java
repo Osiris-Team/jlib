@@ -9,11 +9,15 @@
 package com.osiris.autoplug.core.logger;
 
 import com.osiris.autoplug.core.events.MessageEvent;
+import javafx.scene.layout.AnchorPane;
+import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
+import org.fusesource.jansi.AnsiMode;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -21,7 +25,9 @@ import java.nio.file.attribute.FileTime;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
@@ -34,6 +40,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * That's why we need this class.
  */
 public class AL {
+    /**
+     * This {@link PrintWriter} removes the ansi chars before printing out the text. <br>
+     * Normally this should be null, unless the current terminal does not support colors. <br>
+     */
+    public static PrintWriter STRIPPED_OUT;
     public static String NAME;
     public static File DIR;
     public static File DIR_FULL;
@@ -42,6 +53,8 @@ public class AL {
     public static File LOG_LATEST;
     public static boolean isDebugEnabled = false;
     public static boolean isStarted = false;
+    public static boolean hasAnsiSupport = false;
+    public static boolean isForcedAnsi = false;
 
     // Basically lists that contain code to run when the specific event happens
     public static List<MessageEvent<Message>> actionsOnMessageEvent = new CopyOnWriteArrayList<>();
@@ -55,7 +68,7 @@ public class AL {
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
         final String s2 = MessageFormatter.formatForFile(msg);
 
-        output(s1);
+        print(s1);
         LogFileWriter.writeToLog(s2);
         actionsOnMessageEvent.forEach(event -> event.executeOnEvent(msg));
         actionsOnInfoMessageEvent.forEach(event -> event.executeOnEvent(msg));
@@ -68,7 +81,7 @@ public class AL {
         final String s2 = MessageFormatter.formatForFile(msg);
 
         if (isDebugEnabled) {
-            output(s1);
+            print(s1);
         }
         LogFileWriter.writeToLog(s2);
         actionsOnMessageEvent.forEach(event -> event.executeOnEvent(msg));
@@ -102,7 +115,7 @@ public class AL {
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
         final String s2 = MessageFormatter.formatForFile(msg);
 
-        output(s1);
+        print(s1);
         LogFileWriter.writeToLog(s2);
 
         String fileName = "";
@@ -140,7 +153,7 @@ public class AL {
         final String s1 = MessageFormatter.formatForAnsiConsole(msg);
         final String s2 = MessageFormatter.formatForFile(msg);
 
-        output(s1);
+        print(s1);
         LogFileWriter.writeToLog(s2);
 
         String fileName = "";
@@ -172,8 +185,13 @@ public class AL {
         System.exit(0);
     }
 
-    private static synchronized void output(String s) {
-        System.out.print(s);
+    private static synchronized void print(String s) {
+        if (hasAnsiSupport)
+            System.out.print(s);
+        else{
+            STRIPPED_OUT.print(s);
+            STRIPPED_OUT.flush();
+        }
     }
 
     /**
@@ -183,7 +201,8 @@ public class AL {
     public void start() {
         start("Logger",
                 false,
-                new File(System.getProperty("user.dir") + "/logs")
+                new File(System.getProperty("user.dir") + "/logs"),
+                false
         );
     }
 
@@ -197,12 +216,12 @@ public class AL {
      * @param debug     should the debug log get displayed. Disabled by default.
      * @param loggerDir the directory where logs should be stored
      */
-    public void start(String name, boolean debug, File loggerDir) {
+    public void start(String name, boolean debug, File loggerDir, boolean forceAnsi) {
         if (isStarted) return;
-        AnsiConsole.systemInstall();
         isStarted = true;
         NAME = name;
         isDebugEnabled = debug;
+        isForcedAnsi = forceAnsi;
 
         try {
             DIR = loggerDir;
@@ -231,12 +250,23 @@ public class AL {
                 if (LOG_LATEST.exists() && LOG_LATEST.length() != 0) {
                     // Gets the last modified date and saves it to a new file
                     BasicFileAttributes attrs = Files.readAttributes(LOG_LATEST.toPath(), BasicFileAttributes.class);
-                    FileTime time = attrs.lastModifiedTime();
+                    FileTime lastModifiedTime = attrs.lastModifiedTime();
+                    TemporalAccessor temporalAccessor = LocalDateTime.ofInstant(
+                            lastModifiedTime.toInstant(), Clock.systemDefaultZone().getZone());
 
-                    File savedLog = new File(DIR_FULL.getAbsolutePath() + "/"
-                            + DateTimeFormatter.ofPattern("yyyy-MM-dd  HH-mm-ss").format(
-                            LocalDateTime.ofInstant(
-                                    time.toInstant(), Clock.systemDefaultZone().getZone())) + ".log");
+                    File dirYear = new File(DIR_FULL.getAbsolutePath() + "/"
+                            + DateTimeFormatter.ofPattern("yyyy", Locale.ENGLISH).format(temporalAccessor));
+                    File dirMonth = new File(dirYear.getAbsolutePath() + "/"
+                            + DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH).format(temporalAccessor));
+                    File dirDay = new File(dirMonth.getAbsolutePath() + "/"
+                            + DateTimeFormatter.ofPattern("dd EEE", Locale.ENGLISH).format(temporalAccessor));
+
+                    if (!dirDay.exists())
+                        dirDay.mkdirs();
+
+                    File savedLog = new File(dirDay.getAbsolutePath() + "/"
+                            + DateTimeFormatter.ofPattern("HH-mm-ss  yyyy-MM-dd", Locale.ENGLISH).format(temporalAccessor)
+                            + ".log");
 
                     if (!savedLog.exists()) savedLog.createNewFile();
 
@@ -253,10 +283,33 @@ public class AL {
             //Create writer after file exists
             LogFileWriter.setLogWriterForFile(LOG_LATEST);
 
-            debug(this.getClass(), "Started Logger(" + name + ")");
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        try {
+            // Note that if only colors are not supported by the terminal, the below wont throw an Exception.
+            // Actually AnsiConsole strips the ANSI away automatically by itself.
+            AnsiConsole.systemInstall();
+            hasAnsiSupport = true;
+        } catch (Exception e) {
+            hasAnsiSupport = false;
+            AnsiConsole.systemUninstall();
+            STRIPPED_OUT = new PrintWriter(LogFileWriter.getBufferedWriterForOutputStream(System.out));
+            if (!isForcedAnsi)
+                AL.warn("Disabled ANSI/colored output, due to unsupported terminal.", e);
+        }
+
+        if (isForcedAnsi){
+            try{
+                AnsiConsole.out().setMode(AnsiMode.Default);
+                AL.info("Forced terminal to use ANSI.");
+            } catch (Exception e) {
+                AL.warn("Failed to force terminal to use ANSI.", e);
+            }
+        }
+
+        AL.debug(this.getClass(), "Started Logger(" + name + ")");
     }
 
     /**
@@ -264,7 +317,8 @@ public class AL {
      */
     public void stop() {
         debug(this.getClass(), "Stopped " + NAME);
-        AnsiConsole.systemUninstall();
+        if (hasAnsiSupport)
+            AnsiConsole.systemUninstall();
         LogFileWriter.close();
     }
 
