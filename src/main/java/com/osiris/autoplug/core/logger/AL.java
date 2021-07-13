@@ -9,8 +9,6 @@
 package com.osiris.autoplug.core.logger;
 
 import com.osiris.autoplug.core.events.MessageEvent;
-import javafx.scene.layout.AnchorPane;
-import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.AnsiMode;
 
@@ -188,7 +186,7 @@ public class AL {
     private static synchronized void print(String s) {
         if (hasAnsiSupport)
             System.out.print(s);
-        else{
+        else {
             STRIPPED_OUT.print(s);
             STRIPPED_OUT.flush();
         }
@@ -300,8 +298,8 @@ public class AL {
                 AL.warn("Disabled ANSI/colored output, due to unsupported terminal.", e);
         }
 
-        if (isForcedAnsi){
-            try{
+        if (isForcedAnsi) {
+            try {
                 AnsiConsole.out().setMode(AnsiMode.Default);
                 AL.info("Forced terminal to use ANSI.");
             } catch (Exception e) {

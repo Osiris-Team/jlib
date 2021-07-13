@@ -38,17 +38,8 @@ public class JsonTools {
         JsonElement element;
         try {
             con = (HttpURLConnection) new URL(input_url).openConnection();
-            Random random = new Random();
-            int i = random.nextInt(4);
-            if(i==1)
-                con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online "+random.nextInt());
-            else if (i==2)
-                con.addRequestProperty("User-Agent", random.nextInt()+" AutoPlug - https://autoplug.online ");
-            else if (i==3)
-                con.addRequestProperty("User-Agent", "AutoPlug "+random.nextInt()+"- https://autoplug.online ");
-            else
-                con.addRequestProperty("User-Agent", random.nextInt()+"AutoPlug "+random.nextInt()+"- https://autoplug.online ");
-
+            con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online - Request-ID: " + new Random().nextInt());
+            con.setConnectTimeout(1000);
             con.connect();
 
             if (con.getResponseCode() == 200) {

@@ -8,7 +8,10 @@
 
 package com.osiris.autoplug.core.logger;
 
-import org.fusesource.jansi.*;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiColors;
+import org.fusesource.jansi.AnsiMode;
+import org.fusesource.jansi.AnsiType;
 import org.fusesource.jansi.io.AnsiOutputStream;
 
 import java.io.*;
