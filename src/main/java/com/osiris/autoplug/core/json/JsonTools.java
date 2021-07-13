@@ -21,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class JsonTools {
 
@@ -37,7 +38,17 @@ public class JsonTools {
         JsonElement element;
         try {
             con = (HttpURLConnection) new URL(input_url).openConnection();
-            con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online");
+            Random random = new Random();
+            int i = random.nextInt(4);
+            if(i==1)
+                con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online "+random.nextInt());
+            else if (i==2)
+                con.addRequestProperty("User-Agent", random.nextInt()+" AutoPlug - https://autoplug.online ");
+            else if (i==3)
+                con.addRequestProperty("User-Agent", "AutoPlug "+random.nextInt()+"- https://autoplug.online ");
+            else
+                con.addRequestProperty("User-Agent", random.nextInt()+"AutoPlug "+random.nextInt()+"- https://autoplug.online ");
+
             con.connect();
 
             if (con.getResponseCode() == 200) {
