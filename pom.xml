@@ -14,7 +14,7 @@
 
     <groupId>com.osiris.autoplug.core</groupId>
     <artifactId>autoplug-core</artifactId>
-    <version>10.5</version>
+    <version>10.6</version>
     <packaging>jar</packaging>
 
     <name>AutoPlug-Core</name>
@@ -51,7 +51,7 @@
         <dependency>
             <groupId>com.github.Osiris-Team</groupId>
             <artifactId>Dream-Yaml</artifactId>
-            <version>6.0</version>
+            <version>6.2</version>
         </dependency>
 
         <!-- https://github.com/Osiris-Team/Better-Thread -->
