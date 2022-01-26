@@ -129,6 +129,14 @@ public class MessageFormatter {
                             msg.getException().getStackTrace()) {
                         builder.append(tags).append(" " + element.toString() + "\n");
                     }
+                    Throwable cause = msg.getException().getCause();
+                    if (cause!=null){
+                        builder.append(tags).append(" Cause: \n");
+                        for (StackTraceElement element :
+                                cause.getStackTrace()) {
+                            builder.append(tags).append(" " + element.toString() + "\n");
+                        }
+                    }
                 }
                 builder.append(tags).append(" ================================\n");
                 return builder.toString();
@@ -141,6 +149,14 @@ public class MessageFormatter {
                 for (StackTraceElement element :
                         msg.getException().getStackTrace()) {
                     builder.append(tags).append("[!] " + element.toString() + " [!]\n");
+                }
+                Throwable cause = msg.getException().getCause();
+                if (cause!=null){
+                    builder.append(tags).append("[!] Cause: [!]\n");
+                    for (StackTraceElement element :
+                            cause.getStackTrace()) {
+                        builder.append(tags).append("[!] " + element.toString() + " [!]\n");
+                    }
                 }
 
                 builder.append(tags).append("[!] " + AL.NAME + " is shutting down in 10 seconds. Log saved to " + AL.DIR_FULL.getAbsolutePath() + ". [!]\n");
