@@ -20,16 +20,15 @@ public class MessageFormatter {
     public static final DateTimeFormatter dtf_medium = DateTimeFormatter.ofPattern("dd-MM HH:mm");
     public static final DateTimeFormatter dtf_long = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
-
     public static synchronized String formatForAnsiConsole(Message msg) {
         Ansi tags;
         Ansi ansi;
         switch (msg.getType()) {
             case INFO:
                 tags = Ansi.ansi().bg(Ansi.Color.WHITE)
-                        .fg(Ansi.Color.BLACK).a("[" + dtf_small.format(msg.getDate()) + "]")
-                        .fg(Ansi.Color.CYAN).a("[" + msg.getLabel() + "]")
-                        .fg(Ansi.Color.BLACK).a("[" + msg.getType() + "]")
+                        .fg(Ansi.Color.BLACK).a(dtf_small.format(msg.getDate()) + "|")
+                        .fg(Ansi.Color.CYAN).a(msg.getLabel() + "|")
+                        .fg(Ansi.Color.BLACK).a(msg.getType() + "|")
                         .reset();
                 ansi = Ansi.ansi()
                         .a(" " + msg.getContent())
@@ -37,20 +36,20 @@ public class MessageFormatter {
                 return "" + tags + ansi;
             case DEBUG:
                 tags = Ansi.ansi().bg(Ansi.Color.WHITE)
-                        .fg(Ansi.Color.BLACK).a("[" + dtf_small.format(msg.getDate()) + "]")
-                        .fg(Ansi.Color.CYAN).a("[" + msg.getLabel() + "]")
-                        .fg(Ansi.Color.MAGENTA).a("[" + msg.getType() + "]")
+                        .fg(Ansi.Color.BLACK).a(dtf_small.format(msg.getDate()) + "|")
+                        .fg(Ansi.Color.CYAN).a(msg.getLabel() + "|")
+                        .fgBrightBlack().a(msg.getType() + "|")
                         .reset();
                 ansi = Ansi.ansi()
-                        .fg(Ansi.Color.CYAN).a("[" + msg.getOriginClass().getSimpleName() + "]")
+                        .fgBrightBlack().a(msg.getOriginClass().getSimpleName() + "|")
                         .a(" " + msg.getContent())
                         .reset().newline();
                 return "" + tags + ansi;
             case WARN:
                 tags = Ansi.ansi().bg(Ansi.Color.WHITE)
-                        .fg(Ansi.Color.BLACK).a("[" + dtf_small.format(msg.getDate()) + "]")
-                        .fg(Ansi.Color.CYAN).a("[" + msg.getLabel() + "]")
-                        .fg(Ansi.Color.YELLOW).a("[" + msg.getType() + "]")
+                        .fg(Ansi.Color.BLACK).a(dtf_small.format(msg.getDate()) + "|")
+                        .fg(Ansi.Color.CYAN).a(msg.getLabel() + "|")
+                        .fg(Ansi.Color.YELLOW).a(msg.getType() + "|")
                         .reset();
                 if (msg.getContent() != null)
                     if (msg.getExMessage() != null)
@@ -72,9 +71,9 @@ public class MessageFormatter {
                 return "" + tags + ansi;
             case ERROR:
                 tags = Ansi.ansi().bg(Ansi.Color.RED)
-                        .fg(Ansi.Color.WHITE).a("[" + dtf_small.format(msg.getDate()) + "]")
-                        .fg(Ansi.Color.WHITE).a("[" + msg.getLabel() + "]")
-                        .fg(Ansi.Color.WHITE).a("[" + msg.getType() + "]");
+                        .fg(Ansi.Color.WHITE).a(dtf_small.format(msg.getDate()) + "|")
+                        .fg(Ansi.Color.WHITE).a(msg.getLabel() + "|")
+                        .fg(Ansi.Color.WHITE).a(msg.getType() + "|");
 
                 final StringBuilder builder = new StringBuilder();
                 builder.append(tags).append(Ansi.ansi().a("[!] ############################## [!]").newline());
@@ -93,9 +92,9 @@ public class MessageFormatter {
                 return builder.toString();
             default:
                 tags = Ansi.ansi()
-                        .fg(Ansi.Color.BLACK).a("[" + dtf_small.format(msg.getDate()) + "]")
-                        .fg(Ansi.Color.CYAN).a("[" + msg.getLabel() + "]")
-                        .fg(Ansi.Color.BLACK).a("[" + msg.getType() + "]")
+                        .fg(Ansi.Color.BLACK).a(dtf_small.format(msg.getDate()) + "|")
+                        .fg(Ansi.Color.CYAN).a(msg.getLabel() + "|")
+                        .fg(Ansi.Color.BLACK).a(msg.getType() + "|")
                         .reset();
                 ansi = Ansi.ansi()
                         .a(" " + msg.getContent())
@@ -106,14 +105,14 @@ public class MessageFormatter {
 
     public static synchronized String formatForFile(Message msg) {
         StringBuilder builder = new StringBuilder();
-        final String tags = "[" + dtf_long.format(msg.getDate()) + "][" + msg.getLabel() + "][" + msg.getType() + "]";
+        final String tags = dtf_long.format(msg.getDate()) + "|" + msg.getLabel() + "|" + msg.getType() + "|";
 
         switch (msg.getType()) {
             case INFO:
                 builder.append(tags).append(" " + msg.getContent() + "\n");
                 return builder.toString();
             case DEBUG:
-                builder.append(tags).append("[" + msg.getOriginClass().getSimpleName() + "] " + msg.getContent() + "\n");
+                builder.append(tags).append(msg.getOriginClass().getSimpleName() + "| " + msg.getContent() + "\n");
                 return builder.toString();
             case WARN:
                 builder.append(tags).append(" ================================\n");
