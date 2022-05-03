@@ -38,6 +38,15 @@ class ALTest {
      */
 
     @Test
+    void test() {
+        new AL().start();
+        AL.info("Hello!");
+        AL.debug(this.getClass(), "Hello debug!");
+        AL.warn("Hello warning!");
+        AL.warn("Hello warning with ex!", new Exception("Exception messages are awesome!"));
+    }
+
+    @Test
     void testOnMessageEvents() {
         new AL().start();
 
