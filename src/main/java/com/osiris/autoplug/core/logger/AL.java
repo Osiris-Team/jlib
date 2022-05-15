@@ -119,8 +119,8 @@ public class AL {
         String fileName = "";
         try {
             if (e != null) {
-                StackTraceElement element = e.getStackTrace()[0];
-                fileName = element.getClassName() + "()." + element.getMethodName() + "()";
+                StackTraceElement[] stacktrace = e.getStackTrace();
+                fileName = stacktrace[stacktrace.length-1].getClassName()+" "+stacktrace[0].getClassName() + "()." + stacktrace[0].getMethodName() + "()";
             } else fileName = "No Exception";
             fileName = fileName.replaceAll("[*<>:?/\"\\|]", "");
             File file = new File(DIR_WARN.getAbsolutePath() + "/" + fileName + ".log");
