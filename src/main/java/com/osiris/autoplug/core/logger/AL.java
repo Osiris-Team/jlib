@@ -120,7 +120,9 @@ public class AL {
         try {
             if (e != null) {
                 StackTraceElement[] stacktrace = e.getStackTrace();
-                fileName = stacktrace[stacktrace.length-1].getClassName()+" "+stacktrace[0].getClassName() + "()." + stacktrace[0].getMethodName() + "()";
+                fileName = stacktrace[stacktrace.length-1].getClassName()+" "+stacktrace[0].getClassName() + "." + stacktrace[0].getMethodName();
+                if(fileName.length() > 255)
+                    fileName = fileName.substring(0, 254);
             } else fileName = "No Exception";
             fileName = fileName.replaceAll("[*<>:?/\"\\|]", "");
             File file = new File(DIR_WARN.getAbsolutePath() + "/" + fileName + ".log");
