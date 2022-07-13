@@ -200,7 +200,7 @@ public class AL {
      * Starts the logger with defaults:
      * name = Logger | config = .../logger-config.yml | loggerDir = .../logs;
      */
-    public void start() {
+    public static void start() {
         start("Logger",
                 false,
                 new File(System.getProperty("user.dir") + "/logs/latest.log"),
@@ -219,7 +219,7 @@ public class AL {
      * @param latestLog the file to write the latest log to. The sub-directories /error /warn /full will also
      *                  be created inside that files directory.
      */
-    public void start(String name, boolean debug, File latestLog, boolean forceAnsi) {
+    public static void start(String name, boolean debug, File latestLog, boolean forceAnsi) {
         if (isStarted) return;
         isStarted = true;
         if(latestLog.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
@@ -292,10 +292,10 @@ public class AL {
             }
         }
 
-        AL.debug(this.getClass(), "Started Logger(" + name + ")");
+        AL.debug(AL.class, "Started Logger(" + name + ")");
     }
 
-    private void saveLogIfNeeded(File logLatest) throws IOException {
+    private static void saveLogIfNeeded(File logLatest) throws IOException {
         if(!logLatest.exists() || LOG_LATEST.length() == 0) return;
         BasicFileAttributes attrs = Files.readAttributes(logLatest.toPath(), BasicFileAttributes.class);
         FileTime lastModifiedTime = attrs.lastModifiedTime();
@@ -325,8 +325,8 @@ public class AL {
     /**
      * Stops the AL and saves the log to file.
      */
-    public void stop() {
-        debug(this.getClass(), "Stopped " + NAME);
+    public static void stop() {
+        debug(AL.class, "Stopped " + NAME);
         if (hasAnsiSupport)
             AnsiConsole.systemUninstall();
         LogFileWriter.close();
@@ -350,6 +350,8 @@ public class AL {
             errFile.getParentFile().mkdirs();
             errFile.createNewFile();
         }
+        saveLogIfNeeded(outFile);
+        saveLogIfNeeded(errFile);
 
         TeeOutputStream teeOut = new TeeOutputStream(System.out, new FileOutputStream(outFile));
         System.setOut(new PrintStream(teeOut));
