@@ -339,6 +339,7 @@ public class AL {
      * The provided files also get saved into the /full directory with the according formatted name.
      */
     public static void mirrorSystemStreams(File outFile, File errFile) throws IOException {
+        if(!isStarted) throw new IllegalStateException("start() must at least have been called once before!");
         if(outFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
         if(errFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
 
