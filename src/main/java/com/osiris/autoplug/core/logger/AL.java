@@ -203,7 +203,7 @@ public class AL {
     public void start() {
         start("Logger",
                 false,
-                new File(System.getProperty("user.dir") + "/logs"),
+                new File(System.getProperty("user.dir") + "/logs/latest.log"),
                 false
         );
     }
@@ -216,36 +216,37 @@ public class AL {
      *
      * @param name      this loggers name.
      * @param debug     should the debug log get displayed. Disabled by default.
-     * @param loggerDir the directory where logs should be stored
+     * @param latestLog the file to write the latest log to. The sub-directories /error /warn /full will also
+     *                  be created inside that files directory.
      */
-    public void start(String name, boolean debug, File loggerDir, boolean forceAnsi) {
+    public void start(String name, boolean debug, File latestLog, boolean forceAnsi) {
         if (isStarted) return;
         isStarted = true;
+        if(latestLog.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
         NAME = name;
         isDebugEnabled = debug;
         isForcedAnsi = forceAnsi;
 
         try {
-            DIR = loggerDir;
-            if (!loggerDir.exists())
-                loggerDir.mkdirs();
+            LOG_LATEST = latestLog;
+            DIR = latestLog.getParentFile();
+            if (!latestLog.getParentFile().exists())
+                latestLog.getParentFile().mkdirs();
 
             // Full logs are saved here (differentiated by creation date).
-            DIR_FULL = new File(loggerDir.getAbsolutePath() + "/full");
+            DIR_FULL = new File(DIR + "/full");
             if (!DIR_FULL.exists())
                 DIR_FULL.mkdirs();
 
             // Only warnings are saved here (differentiated by class.method).
-            DIR_WARN = new File(loggerDir.getAbsolutePath() + "/warn");
+            DIR_WARN = new File(DIR + "/warn");
             if (!DIR_WARN.exists())
                 DIR_WARN.mkdirs();
 
             // Only errors are saved here (differentiated by class.method).
-            DIR_ERROR = new File(loggerDir.getAbsolutePath() + "/error");
+            DIR_ERROR = new File(DIR + "/error");
             if (!DIR_ERROR.exists())
                 DIR_ERROR.mkdirs();
-
-            LOG_LATEST = new File(DIR_FULL.getAbsolutePath() + "/00A-latest.log");
 
             // If latest_log file from last session exists and has information in it, we first duplicate that file and then replace with new blank file
             try {
@@ -313,7 +314,7 @@ public class AL {
 
         File savedLog = new File(dirDay.getAbsolutePath() + "/"
                 + DateTimeFormatter.ofPattern("HH-mm-ss  yyyy-MM-dd", Locale.ENGLISH).format(temporalAccessor)
-                + "  "+logLatest.getName() + ".log");
+                + "  "+logLatest.getName());
 
         if (!savedLog.exists()) savedLog.createNewFile();
 
@@ -338,9 +339,16 @@ public class AL {
      * The provided files also get saved into the /full directory with the according formatted name.
      */
     public static void mirrorSystemStreams(File outFile, File errFile) throws IOException {
+        if(outFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+        if(errFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+
         if(!outFile.exists()){
             outFile.getParentFile().mkdirs();
             outFile.createNewFile();
+        }
+        if(!errFile.exists()){
+            errFile.getParentFile().mkdirs();
+            errFile.createNewFile();
         }
 
         TeeOutputStream teeOut = new TeeOutputStream(System.out, new FileOutputStream(outFile));
