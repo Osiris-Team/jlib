@@ -9,13 +9,11 @@
 package com.osiris.autoplug.core.logger;
 
 import com.osiris.autoplug.core.events.MessageEvent;
+import org.apache.commons.io.output.TeeOutputStream;
 import org.fusesource.jansi.AnsiConsole;
 import org.fusesource.jansi.AnsiMode;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -24,6 +22,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -53,6 +52,7 @@ public class AL {
     public static boolean isStarted = false;
     public static boolean hasAnsiSupport = false;
     public static boolean isForcedAnsi = false;
+    public static final List<File> listSysOutMirrorFiles = new ArrayList<>();
 
     // Basically lists that contain code to run when the specific event happens
     public static List<MessageEvent<Message>> actionsOnMessageEvent = new CopyOnWriteArrayList<>();
@@ -194,6 +194,8 @@ public class AL {
         }
     }
 
+
+
     /**
      * Starts the logger with defaults:
      * name = Logger | config = .../logger-config.yml | loggerDir = .../logs;
@@ -247,31 +249,11 @@ public class AL {
 
             // If latest_log file from last session exists and has information in it, we first duplicate that file and then replace with new blank file
             try {
-                if (LOG_LATEST.exists() && LOG_LATEST.length() != 0) {
-                    // Gets the last modified date and saves it to a new file
-                    BasicFileAttributes attrs = Files.readAttributes(LOG_LATEST.toPath(), BasicFileAttributes.class);
-                    FileTime lastModifiedTime = attrs.lastModifiedTime();
-                    TemporalAccessor temporalAccessor = LocalDateTime.ofInstant(
-                            lastModifiedTime.toInstant(), Clock.systemDefaultZone().getZone());
-
-                    File dirYear = new File(DIR_FULL.getAbsolutePath() + "/"
-                            + DateTimeFormatter.ofPattern("yyyy", Locale.ENGLISH).format(temporalAccessor));
-                    File dirMonth = new File(dirYear.getAbsolutePath() + "/"
-                            + DateTimeFormatter.ofPattern("MMMM", Locale.ENGLISH).format(temporalAccessor));
-                    File dirDay = new File(dirMonth.getAbsolutePath() + "/"
-                            + DateTimeFormatter.ofPattern("dd EEE", Locale.ENGLISH).format(temporalAccessor));
-
-                    if (!dirDay.exists())
-                        dirDay.mkdirs();
-
-                    File savedLog = new File(dirDay.getAbsolutePath() + "/"
-                            + DateTimeFormatter.ofPattern("HH-mm-ss  yyyy-MM-dd", Locale.ENGLISH).format(temporalAccessor)
-                            + ".log");
-
-                    if (!savedLog.exists()) savedLog.createNewFile();
-
-                    Files.copy(LOG_LATEST.toPath(), savedLog.toPath(),
-                            StandardCopyOption.REPLACE_EXISTING);
+                saveLogIfNeeded(LOG_LATEST);
+                synchronized (listSysOutMirrorFiles){
+                    for (File file : listSysOutMirrorFiles) {
+                        saveLogIfNeeded(file);
+                    }
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -312,6 +294,33 @@ public class AL {
         AL.debug(this.getClass(), "Started Logger(" + name + ")");
     }
 
+    private void saveLogIfNeeded(File logLatest) throws IOException {
+        if(!logLatest.exists() || LOG_LATEST.length() == 0) return;
+        BasicFileAttributes attrs = Files.readAttributes(logLatest.toPath(), BasicFileAttributes.class);
+        FileTime lastModifiedTime = attrs.lastModifiedTime();
+        TemporalAccessor temporalAccessor = LocalDateTime.ofInstant(
+                lastModifiedTime.toInstant(), Clock.systemDefaultZone().getZone());
+
+        File dirYear = new File(DIR_FULL.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("yyyy", Locale.ENGLISH).format(temporalAccessor));
+        File dirMonth = new File(dirYear.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("MM MMMM", Locale.ENGLISH).format(temporalAccessor));
+        File dirDay = new File(dirMonth.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("dd EEE", Locale.ENGLISH).format(temporalAccessor));
+
+        if (!dirDay.exists())
+            dirDay.mkdirs();
+
+        File savedLog = new File(dirDay.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("HH-mm-ss  yyyy-MM-dd", Locale.ENGLISH).format(temporalAccessor)
+                + "  "+logLatest.getName() + ".log");
+
+        if (!savedLog.exists()) savedLog.createNewFile();
+
+        Files.copy(LOG_LATEST.toPath(), savedLog.toPath(),
+                StandardCopyOption.REPLACE_EXISTING);
+    }
+
     /**
      * Stops the AL and saves the log to file.
      */
@@ -320,6 +329,30 @@ public class AL {
         if (hasAnsiSupport)
             AnsiConsole.systemUninstall();
         LogFileWriter.close();
+    }
+
+    /**
+     * Mirrors the {@link System#out} and {@link System#err} streams
+     * to the provided file, without making them unavailable to the console/terminal. <p>
+     *
+     * The provided files also get saved into the /full directory with the according formatted name.
+     */
+    public static void mirrorSystemStreams(File outFile, File errFile) throws IOException {
+        if(!outFile.exists()){
+            outFile.getParentFile().mkdirs();
+            outFile.createNewFile();
+        }
+
+        TeeOutputStream teeOut = new TeeOutputStream(System.out, new FileOutputStream(outFile));
+        System.setOut(new PrintStream(teeOut));
+
+        TeeOutputStream teeErr = new TeeOutputStream(System.err, new FileOutputStream(errFile));
+        System.setErr(new PrintStream(teeErr));
+
+        synchronized (listSysOutMirrorFiles){
+            listSysOutMirrorFiles.add(outFile);
+            listSysOutMirrorFiles.add(errFile);
+        }
     }
 
 }

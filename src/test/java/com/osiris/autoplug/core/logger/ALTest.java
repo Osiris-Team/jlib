@@ -5,9 +5,17 @@ import org.jline.utils.Log;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.util.Date;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -68,5 +76,39 @@ class ALTest {
         AL.info("This is an info message!");
         AL.debug(this.getClass(), "This is a debug message!");
         AL.warn("This is a warn message!");
+    }
+
+    @Test
+    void testFormat() {
+        TemporalAccessor temporalAccessor = LocalDateTime.ofInstant(
+                Instant.now(), Clock.systemDefaultZone().getZone());
+
+        File dir = new File(System.getProperty("user.dir"));
+        File dirYear = new File(dir.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("yyyy", Locale.ENGLISH).format(temporalAccessor));
+        File dirMonth = new File(dirYear.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("MM MMMM", Locale.ENGLISH).format(temporalAccessor));
+        File dirDay = new File(dirMonth.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("dd EEE", Locale.ENGLISH).format(temporalAccessor));
+
+        File savedLog = new File(dirDay.getAbsolutePath() + "/"
+                + DateTimeFormatter.ofPattern("HH-mm-ss  yyyy-MM-dd", Locale.ENGLISH).format(temporalAccessor)
+                + "aaaa.log");
+        System.out.println(savedLog);
+    }
+
+    @Test
+    void testMirror() throws IOException {
+        File file = new File(System.getProperty("user.dir")+"/test.log");
+        File fileErr = new File(System.getProperty("user.dir")+"/test-err.log");
+        AL.mirrorSystemStreams(file, fileErr);
+        System.out.println("This is out!");
+        System.err.println("This is err!");
+        System.out.flush();
+        System.err.flush();
+        assertTrue(file.length() != 0);
+        assertTrue(fileErr.length() != 0);
+        file.delete();
+        fileErr.delete();
     }
 }
