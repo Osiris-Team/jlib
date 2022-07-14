@@ -125,10 +125,11 @@ public class MessageFormatter {
                     builder.append(tags).append(" Type: " + msg.getException().getClass().getCanonicalName() + "\n");
                     builder.append(tags).append(" Stacktrace: \n");
 
-                    for (StackTraceElement element :
-                            msg.getException().getStackTrace()) {
-                        builder.append(tags).append(" " + element.toString() + "\n");
-                    }
+                    if(msg.getException().getStackTrace() != null)
+                        for (StackTraceElement element :
+                                msg.getException().getStackTrace()) {
+                            builder.append(tags).append(" " + element.toString() + "\n");
+                        }
                     Throwable cause = msg.getException().getCause();
                     if (cause!=null){
                         builder.append(tags).append(" Cause: "+cause.getMessage()+"\n");
