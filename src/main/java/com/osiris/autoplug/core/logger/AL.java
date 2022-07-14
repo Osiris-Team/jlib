@@ -295,9 +295,9 @@ public class AL {
         AL.debug(AL.class, "Started Logger(" + name + ")");
     }
 
-    private static void saveLogIfNeeded(File logLatest) throws IOException {
-        if(!logLatest.exists() || LOG_LATEST.length() == 0) return;
-        BasicFileAttributes attrs = Files.readAttributes(logLatest.toPath(), BasicFileAttributes.class);
+    private static void saveLogIfNeeded(File logFile) throws IOException {
+        if(!logFile.exists() || logFile.length() == 0) return;
+        BasicFileAttributes attrs = Files.readAttributes(logFile.toPath(), BasicFileAttributes.class);
         FileTime lastModifiedTime = attrs.lastModifiedTime();
         TemporalAccessor temporalAccessor = LocalDateTime.ofInstant(
                 lastModifiedTime.toInstant(), Clock.systemDefaultZone().getZone());
@@ -314,11 +314,11 @@ public class AL {
 
         File savedLog = new File(dirDay.getAbsolutePath() + "/"
                 + DateTimeFormatter.ofPattern("HH-mm-ss  yyyy-MM-dd", Locale.ENGLISH).format(temporalAccessor)
-                + "  "+logLatest.getName());
+                + "  "+logFile.getName());
 
         if (!savedLog.exists()) savedLog.createNewFile();
 
-        Files.copy(LOG_LATEST.toPath(), savedLog.toPath(),
+        Files.copy(logFile.toPath(), savedLog.toPath(),
                 StandardCopyOption.REPLACE_EXISTING);
     }
 
