@@ -20,7 +20,10 @@ import java.util.List;
  */
 public class QuickSort implements SortAlgorithm {
 
-    public void sortJsonArray(JsonArray arr, Comparator<ComparableJsonElement> comparator) {
+    /**
+     * Sorts the provided array and returns it.
+     */
+    public JsonArray sortJsonArray(JsonArray arr, Comparator<ComparableJsonElement> comparator) {
         ComparableJsonElement[] temp = new ComparableJsonElement[arr.size()];
         for (int i = 0; i < arr.size(); i++) {
             temp[i] = new ComparableJsonElement(arr.get(i), comparator);
@@ -29,17 +32,24 @@ public class QuickSort implements SortAlgorithm {
         for (int i = 0; i < arr.size(); i++) {
             arr.set(i, temp[i].el);
         }
+        return arr;
     }
 
     /**
-     * The only way of doing this on lists is by creating a copy of it internally
-     * as an array then convert it back to a new list.
+     * Sorts the provided list and returns it.
      */
-    public <T extends Comparable<T>> List<T> copyAndSort(List<T> unsorted, Comparator<ComparableObject> comparator) {
-        return Arrays.asList(sort(unsorted.toArray((T[]) new Comparable[unsorted.size()]), comparator));
+    public <T> List<T> sort(List<T> unsorted, Comparator<ComparableObject> comparator) {
+        Object[] copy = sort(unsorted.toArray((T[]) new Object[unsorted.size()]), comparator);
+        for (int i = 0; i < copy.length; i++) {
+            unsorted.set(i, (T) copy[i]);
+        }
+        return unsorted;
     }
 
-    public <T extends Comparable<T>> T[] sort(T[] arr, Comparator<ComparableObject> comparator) {
+    /**
+     * Sorts the provided array and returns it.
+     */
+    public <T> T[] sort(T[] arr, Comparator<ComparableObject> comparator) {
         ComparableObject[] temp = new ComparableObject[arr.length];
         for (int i = 0; i < arr.length; i++) {
             temp[i] = new ComparableObject(arr[i], comparator);

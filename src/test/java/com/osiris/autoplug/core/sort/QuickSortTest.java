@@ -49,7 +49,7 @@ class QuickSortTest {
         arr.add(1);
         arr.add(-1);
         arr.add(0);
-        arr = new QuickSort().copyAndSort(arr, Comparator.comparingInt(thisNum -> (int) thisNum.obj));
+        new QuickSort().sort(arr, Comparator.comparingInt(thisNum -> (int) thisNum.obj));
         assertEquals(-1, arr.get(0));
         assertEquals(0, arr.get(1));
         assertEquals(1, arr.get(2));
