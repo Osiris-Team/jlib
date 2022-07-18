@@ -29,6 +29,18 @@ public class QuickSort implements SortAlgorithm {
         }
     }
 
+    public <T extends Comparable<T>> T[] sort(T[] arr, Comparator<ComparableObject> comparator) {
+        ComparableObject[] temp = new ComparableObject[arr.length];
+        for (int i = 0; i < arr.length; i++) {
+            temp[i] = new ComparableObject(arr[i], comparator);
+        }
+        temp = sort(temp);
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = (T) temp[i].obj;
+        }
+        return arr;
+    }
+
     /**
      * This method implements the Generic Quick Sort
      *

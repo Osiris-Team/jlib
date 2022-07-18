@@ -21,6 +21,13 @@ the fastest Json library for Java).
 
 ## Sorting
 The `QuickSort` class implements the QuickSort algorithm and provides useful
-static methods to sort arrays of any type (including `JsonArrays`).
+static methods to sort arrays of any type (including `JsonArrays`). Usage example:
+```java
+new QuickSort().sortJsonArray(arr, (thisEl, otherEl) -> {
+    int thisId = thisEl.el.getAsJsonObject().get("id").getAsInt();
+    int otherId = otherEl.el.getAsJsonObject().get("id").getAsInt();
+    return Integer.compare(thisId, otherId);
+});
+```
 
 
