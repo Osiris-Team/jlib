@@ -10,7 +10,9 @@ package com.osiris.autoplug.core.sort;
 
 import com.google.gson.JsonArray;
 
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author Varun Upadhyay (https://github.com/varunu28)
@@ -27,6 +29,14 @@ public class QuickSort implements SortAlgorithm {
         for (int i = 0; i < arr.size(); i++) {
             arr.set(i, temp[i].el);
         }
+    }
+
+    /**
+     * The only way of doing this on lists is by creating a copy of it internally
+     * as an array then convert it back to a new list.
+     */
+    public <T extends Comparable<T>> List<T> copyAndSort(List<T> unsorted, Comparator<ComparableObject> comparator) {
+        return Arrays.asList(sort(unsorted.toArray((T[]) new Comparable[unsorted.size()]), comparator));
     }
 
     public <T extends Comparable<T>> T[] sort(T[] arr, Comparator<ComparableObject> comparator) {
