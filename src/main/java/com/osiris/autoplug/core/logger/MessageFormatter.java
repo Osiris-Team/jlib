@@ -16,9 +16,9 @@ import java.time.format.DateTimeFormatter;
  * Formats messages into something useful.
  */
 public class MessageFormatter {
-    public static final DateTimeFormatter dtf_small = DateTimeFormatter.ofPattern("HH:mm");
-    public static final DateTimeFormatter dtf_medium = DateTimeFormatter.ofPattern("dd-MM HH:mm");
-    public static final DateTimeFormatter dtf_long = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+    public static DateTimeFormatter dtf_small = DateTimeFormatter.ofPattern("HH:mm");
+    public static DateTimeFormatter dtf_medium = DateTimeFormatter.ofPattern("dd-MM HH:mm");
+    public static DateTimeFormatter dtf_long = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
 
 
     public static synchronized String formatForAnsiConsole(Message msg) {
