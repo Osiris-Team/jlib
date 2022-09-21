@@ -32,7 +32,7 @@ public class UtilsFiles {
      * Tries deleting the provided file 100000 times, and throws {@link FileSystemLoopException} if it fails.
      */
     public void forceDeleteFile(File file) throws FileSystemLoopException {
-        if(!file.exists()) return;
+        if (!file.exists()) return;
         for (int i = 0; i < 100000; i++) {
             if (file.delete()) return;
         }

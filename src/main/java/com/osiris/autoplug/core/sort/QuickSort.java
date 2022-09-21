@@ -10,7 +10,6 @@ package com.osiris.autoplug.core.sort;
 
 import com.google.gson.JsonArray;
 
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 

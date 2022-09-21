@@ -39,7 +39,7 @@ public class Search {
         String sha1 = null;
         String md5 = null;
         try {
-            String url = "https://repo1.maven.org/maven2/"+
+            String url = "https://repo1.maven.org/maven2/" +
                     groupId.replaceAll("\\.", "/") + "/" + artifactId;
             Document document = Jsoup.connect(url).get();
 
@@ -48,19 +48,19 @@ public class Search {
             Element latestAsset = null;
             for (Element child : document.getElementsByAttributeValue("id", "contents").get(0).children()) {
                 String name = child.attr("title");
-                if(latestAsset==null){
-                    if(Version.isLatestBigger(currentVersion, name))
+                if (latestAsset == null) {
+                    if (Version.isLatestBigger(currentVersion, name))
                         latestAsset = child;
-                } else{
-                    if(Version.isLatestBigger(latestAsset.attr("title"), name))
+                } else {
+                    if (Version.isLatestBigger(latestAsset.attr("title"), name))
                         latestAsset = child;
                 }
             }
 
-            if(latestAsset!=null){
+            if (latestAsset != null) {
                 updateAvailable = true;
                 latestVersion = latestAsset.attr("title");
-                url = url + "/" +latestVersion;
+                url = url + "/" + latestVersion;
                 Elements assets = Jsoup.connect(url).get().getElementsByAttributeValue("id", "contents").get(0).children();
                 for (Element asset : assets) {
                     String name = asset.attr("title");
@@ -74,9 +74,9 @@ public class Search {
                 String expectedMd5AssetName = downloadFile + ".md5";
                 for (Element asset : assets) {
                     String name = asset.attr("title");
-                    if(name.equals(expectedSha1AssetName)){
+                    if (name.equals(expectedSha1AssetName)) {
                         sha1 = IOUtils.toString(new URL(url + name), StandardCharsets.UTF_8);
-                    } else if (name.equals(expectedMd5AssetName)){
+                    } else if (name.equals(expectedMd5AssetName)) {
                         md5 = IOUtils.toString(new URL(url + name), StandardCharsets.UTF_8);
                     }
                 }

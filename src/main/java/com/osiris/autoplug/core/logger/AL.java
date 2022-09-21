@@ -37,6 +37,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * That's why we need this class.
  */
 public class AL {
+    public static final List<File> listSysOutMirrorFiles = new ArrayList<>();
     /**
      * This {@link PrintWriter} removes the ansi chars before printing out the text. <br>
      * Normally this should be null, unless the current terminal does not support colors. <br>
@@ -52,8 +53,6 @@ public class AL {
     public static boolean isStarted = false;
     public static boolean hasAnsiSupport = false;
     public static boolean isForcedAnsi = false;
-    public static final List<File> listSysOutMirrorFiles = new ArrayList<>();
-
     // Basically lists that contain code to run when the specific event happens
     public static List<MessageEvent<Message>> actionsOnMessageEvent = new CopyOnWriteArrayList<>();
     public static List<MessageEvent<Message>> actionsOnInfoMessageEvent = new CopyOnWriteArrayList<>();
@@ -120,10 +119,10 @@ public class AL {
         try {
             if (e != null) {
                 StackTraceElement[] stacktrace = e.getStackTrace();
-                if(stacktrace == null || stacktrace.length == 0) fileName = "No Stacktrace";
-                else{
-                    fileName = stacktrace[stacktrace.length-1].getClassName()+" "+stacktrace[0].getClassName() + "." + stacktrace[0].getMethodName();
-                    if(fileName.length() > 255)
+                if (stacktrace == null || stacktrace.length == 0) fileName = "No Stacktrace";
+                else {
+                    fileName = stacktrace[stacktrace.length - 1].getClassName() + " " + stacktrace[0].getClassName() + "." + stacktrace[0].getMethodName();
+                    if (fileName.length() > 255)
                         fileName = fileName.substring(0, 254);
                 }
             } else fileName = "No Exception";
@@ -198,7 +197,6 @@ public class AL {
     }
 
 
-
     /**
      * Starts the logger with defaults:
      * name = Logger | config = .../logger-config.yml | loggerDir = .../logs;
@@ -225,7 +223,7 @@ public class AL {
     public static void start(String name, boolean debug, File latestLog, boolean forceAnsi) {
         if (isStarted) return;
         isStarted = true;
-        if(latestLog.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+        if (latestLog.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
         NAME = name;
         isDebugEnabled = debug;
         isForcedAnsi = forceAnsi;
@@ -254,7 +252,7 @@ public class AL {
             // If latest_log file from last session exists and has information in it, we first duplicate that file and then replace with new blank file
             try {
                 saveLogIfNeeded(LOG_LATEST);
-                synchronized (listSysOutMirrorFiles){
+                synchronized (listSysOutMirrorFiles) {
                     for (File file : listSysOutMirrorFiles) {
                         saveLogIfNeeded(file);
                     }
@@ -299,7 +297,7 @@ public class AL {
     }
 
     private static void saveLogIfNeeded(File logFile) throws IOException {
-        if(!logFile.exists() || logFile.length() == 0) return;
+        if (!logFile.exists() || logFile.length() == 0) return;
         BasicFileAttributes attrs = Files.readAttributes(logFile.toPath(), BasicFileAttributes.class);
         FileTime lastModifiedTime = attrs.lastModifiedTime();
         TemporalAccessor temporalAccessor = LocalDateTime.ofInstant(
@@ -317,7 +315,7 @@ public class AL {
 
         File savedLog = new File(dirDay.getAbsolutePath() + "/"
                 + DateTimeFormatter.ofPattern("HH-mm-ss  yyyy-MM-dd", Locale.ENGLISH).format(temporalAccessor)
-                + "  "+logFile.getName());
+                + "  " + logFile.getName());
 
         if (!savedLog.exists()) savedLog.createNewFile();
 
@@ -338,19 +336,19 @@ public class AL {
     /**
      * Mirrors the {@link System#out} and {@link System#err} streams
      * to the provided file, without making them unavailable to the console/terminal. <p>
-     *
+     * <p>
      * The provided files also get saved into the /full directory with the according formatted name.
      */
     public static void mirrorSystemStreams(File outFile, File errFile) throws IOException {
-        if(!isStarted) throw new IllegalStateException("start() must at least have been called once before!");
-        if(outFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
-        if(errFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+        if (!isStarted) throw new IllegalStateException("start() must at least have been called once before!");
+        if (outFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
+        if (errFile.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
 
-        if(!outFile.exists()){
+        if (!outFile.exists()) {
             outFile.getParentFile().mkdirs();
             outFile.createNewFile();
         }
-        if(!errFile.exists()){
+        if (!errFile.exists()) {
             errFile.getParentFile().mkdirs();
             errFile.createNewFile();
         }
@@ -363,7 +361,7 @@ public class AL {
         TeeOutputStream teeErr = new TeeOutputStream(System.err, new FileOutputStream(errFile));
         System.setErr(new PrintStream(teeErr));
 
-        synchronized (listSysOutMirrorFiles){
+        synchronized (listSysOutMirrorFiles) {
             listSysOutMirrorFiles.add(outFile);
             listSysOutMirrorFiles.add(errFile);
         }

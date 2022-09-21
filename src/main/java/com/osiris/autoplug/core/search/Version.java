@@ -56,7 +56,7 @@ public class Version {
         Objects.requireNonNull(version);
         version = version.trim() // Remove left and right spaces
                 .replaceAll("[^0-9.]", ""); // Remove everything except numbers and dots
-        while (version.contains("..")){
+        while (version.contains("..")) {
             // 0.0..1 -> 0.0.1, or 0...1 -> 0.1, works with as many dots as you want
             version = version.replaceAll("\\.\\.", ".");
         }

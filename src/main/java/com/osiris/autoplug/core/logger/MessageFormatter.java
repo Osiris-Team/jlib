@@ -125,15 +125,15 @@ public class MessageFormatter {
                     builder.append(tags).append(" Type: " + msg.getException().getClass().getCanonicalName() + "\n");
                     builder.append(tags).append(" Stacktrace: \n");
 
-                    if(msg.getException().getStackTrace() != null)
+                    if (msg.getException().getStackTrace() != null)
                         for (StackTraceElement element :
                                 msg.getException().getStackTrace()) {
                             builder.append(tags).append(" " + element.toString() + "\n");
                         }
                     Throwable cause = msg.getException().getCause();
-                    if (cause!=null){
-                        builder.append(tags).append(" Cause: "+cause.getMessage()+"\n");
-                        builder.append(tags).append(" Cause-Type: "+cause.getClass().getCanonicalName()+"\n");
+                    if (cause != null) {
+                        builder.append(tags).append(" Cause: " + cause.getMessage() + "\n");
+                        builder.append(tags).append(" Cause-Type: " + cause.getClass().getCanonicalName() + "\n");
                         builder.append(tags).append(" Cause-Stacktrace: \n");
                         for (StackTraceElement element :
                                 cause.getStackTrace()) {
@@ -154,9 +154,9 @@ public class MessageFormatter {
                     builder.append(tags).append("[!] " + element.toString() + " [!]\n");
                 }
                 Throwable cause = msg.getException().getCause();
-                if (cause!=null){
-                    builder.append(tags).append("[!] Cause: "+cause.getMessage()+" [!]\n");
-                    builder.append(tags).append("[!] Cause-Type: "+cause.getClass().getCanonicalName()+" [!]\n");
+                if (cause != null) {
+                    builder.append(tags).append("[!] Cause: " + cause.getMessage() + " [!]\n");
+                    builder.append(tags).append("[!] Cause-Type: " + cause.getClass().getCanonicalName() + " [!]\n");
                     builder.append(tags).append("[!] Cause-Stacktrace: [!]\n");
                     for (StackTraceElement element :
                             cause.getStackTrace()) {
