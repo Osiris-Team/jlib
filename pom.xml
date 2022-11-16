@@ -12,12 +12,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.osiris.autoplug.core</groupId>
-    <artifactId>autoplug-core</artifactId>
+    <groupId>com.osiris.jlib</groupId>
+    <artifactId>jlib</artifactId>
     <version>LATEST</version>
     <packaging>jar</packaging>
 
-    <name>AutoPlug-Core</name>
+    <name>jlib</name>
     <description>Frequently used code across all AutoPlug projects inside one jar.</description>
 
     <properties>
