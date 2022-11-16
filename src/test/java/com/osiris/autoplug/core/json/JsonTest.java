@@ -10,10 +10,9 @@ class JsonTest {
 
     @Test
     void testJsonFromUrl() throws IOException, HttpErrorException, WrongJsonTypeException {
-        Json tools = new Json();
-        tools.fromUrl("https://jsonplaceholder.typicode.com/todos/1");
-        tools.fromUrlAsObject("https://jsonplaceholder.typicode.com/todos/1");
-        tools.fromUrlAsJsonArray("https://jsonplaceholder.typicode.com/posts/1/comments");
-        tools.fromUrlAsList("https://jsonplaceholder.typicode.com/posts/1/comments");
+        Json.get("https://jsonplaceholder.typicode.com/todos/1");
+        Json.getAsObject("https://jsonplaceholder.typicode.com/todos/1");
+        Json.getAsJsonArray("https://jsonplaceholder.typicode.com/posts/1/comments");
+        Json.getAsList("https://jsonplaceholder.typicode.com/posts/1/comments");
     }
 }

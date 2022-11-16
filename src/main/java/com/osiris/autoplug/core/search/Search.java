@@ -101,7 +101,7 @@ public class Search {
         String downloadFile = null;
         String sha256 = null;
         try {
-            JsonObject latestRelease = Json.fromUrlAsObject("https://api.github.com/repos/" + repoName + "/releases/latest");
+            JsonObject latestRelease = Json.getAsObject("https://api.github.com/repos/" + repoName + "/releases/latest");
             latestVersion = latestRelease.get("tag_name").getAsString();
             if (latestVersion != null)
                 latestVersion = latestVersion.replaceAll("[^0-9.]", ""); // Before passing over remove everything except numbers and dots

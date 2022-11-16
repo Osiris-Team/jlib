@@ -1,31 +1,22 @@
-/*
- * Copyright Osiris Team
- * All rights reserved.
- *
- * This software is copyrighted work licensed under the terms of the
- * AutoPlug License.  Please consult the file "LICENSE" for details.
- */
-
 package com.osiris.autoplug.core.json;
 
 import com.google.gson.*;
 import com.osiris.autoplug.core.json.exceptions.HttpErrorException;
 import com.osiris.autoplug.core.json.exceptions.WrongJsonTypeException;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 public class Json {
 
     /**
      * Reads/Parses the provided String to a {@link JsonElement}.
      */
-    public static JsonElement from(String s) {
+    public static JsonElement fromString(String s) {
         return JsonParser.parseString(s);
     }
 
@@ -36,40 +27,16 @@ public class Json {
         return new Gson().toJson(el);
     }
 
-    /**
-     * Returns the json-element. This can be a json-array or a json-object.
-     *
-     * @param url The url which leads to the json file.
-     * @return JsonElement
-     * @throws Exception When status code other than 200.
-     */
-    public static JsonElement fromUrl(String url) throws IOException, HttpErrorException {
-        HttpURLConnection con = null;
-        JsonElement element;
-        try {
-            con = (HttpURLConnection) new URL(url).openConnection();
-            con.addRequestProperty("User-Agent", "AutoPlug - https://autoplug.online - Request-ID: " + new Random().nextInt());
-            con.setConnectTimeout(1000);
-            con.connect();
-
-            if (con.getResponseCode() == 200) {
-                try (InputStreamReader inr = new InputStreamReader(con.getInputStream())) {
-                    element = JsonParser.parseReader(inr);
-                }
-            } else {
-                throw new HttpErrorException(con.getResponseCode(), con.getResponseMessage(), "Couldn't get the json file from: " + url);
-            }
-        } catch (IOException | HttpErrorException e) {
-            if (con != null) con.disconnect();
-            throw e;
-        } finally {
-            if (con != null) con.disconnect();
-        }
-        return element;
+    public static JsonElement get(String url) throws IOException, HttpErrorException {
+        return get("GET", url, null, (Integer[]) null);
     }
 
-    public static JsonArray fromUrlAsJsonArray(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
-        JsonElement element = fromUrl(url);
+    /**
+     * Expects a {@link JsonArray}, otherwise throws {@link WrongJsonTypeException}. <br>
+     * See {@link #(String, String, JsonElement, Integer...)} for details.
+     */
+    public static JsonArray getAsJsonArray(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
+        JsonElement element = get(url);
         if (element != null && element.isJsonArray()) {
             return element.getAsJsonArray();
         } else {
@@ -78,14 +45,12 @@ public class Json {
     }
 
     /**
-     * Turns a JsonArray with its objects into a list.
-     *
-     * @param url The url where to find the json file.
-     * @return A list with JsonObjects or null if there was a error with the url.
+     * Expects a {@link JsonArray} containing {@link JsonObject}s, that gets converted to a {@link List}, otherwise throws {@link WrongJsonTypeException}. <br>
+     * See {@link #get(String, String, JsonElement, Integer...)} for details.
      */
-    public static List<JsonObject> fromUrlAsList(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
+    public static List<JsonObject> getAsList(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
         List<JsonObject> objectList = new ArrayList<>();
-        JsonElement element = fromUrl(url);
+        JsonElement element = get(url);
         if (element != null && element.isJsonArray()) {
             final JsonArray ja = element.getAsJsonArray();
             for (int i = 0; i < ja.size(); i++) {
@@ -99,13 +64,11 @@ public class Json {
     }
 
     /**
-     * Gets a single JsonObject.
-     *
-     * @param url The url where to find the json file.
-     * @return A JsonObject or null if there was a error with the url.
+     * Expects a {@link JsonObject}, otherwise throws {@link WrongJsonTypeException}. <br>
+     * See {@link #get(String, String, JsonElement, Integer...)} for details.
      */
-    public static JsonObject fromUrlAsObject(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
-        JsonElement element = fromUrl(url);
+    public static JsonObject getAsObject(String url) throws IOException, HttpErrorException, WrongJsonTypeException {
+        JsonElement element = get(url);
         if (element != null && element.isJsonObject()) {
             return element.getAsJsonObject();
         } else {
@@ -113,4 +76,91 @@ public class Json {
         }
     }
 
+    public static JsonElement get(String requestMethod, String url) throws IOException, HttpErrorException {
+        return get(requestMethod, url, null, (Integer[]) null);
+    }
+
+    public static JsonElement get(String requestMethod, String url, JsonElement elementToSend) throws IOException, HttpErrorException {
+        return get(requestMethod, url, elementToSend, (Integer[]) null);
+    }
+
+    /**
+     * Returns the json-element. This can be a json-array or a json-object.
+     *
+     * @param url The url which leads to the json file.
+     * @return JsonElement
+     * @throws HttpErrorException When status code outside of range 200 to 299 (or not one of the provided success codes).
+     */
+    public static JsonElement get(String requestMethod, String url, JsonElement elementToSend, Integer... successCodes) throws IOException, HttpErrorException {
+        HttpURLConnection con = null;
+        try {
+            con = (HttpURLConnection) new URL(url).openConnection();
+            con.addRequestProperty("User-Agent", "AutoPlug-Core");
+            con.addRequestProperty("Content-Type", "application/json");
+            con.setConnectTimeout(1000);
+            con.setRequestMethod(requestMethod);
+            con.setDoOutput(true);
+            con.setDoInput(true);
+            con.connect();
+
+            if (elementToSend != null) {
+                OutputStream out = con.getOutputStream();
+                try (OutputStreamWriter outWrt = new OutputStreamWriter(out)) {
+                    try (BufferedReader inr = new BufferedReader(new StringReader(new Gson().toJson(elementToSend)))) {
+                        String l = null;
+                        while ((l = inr.readLine()) != null) {
+                            outWrt.write(l);
+                        }
+                    }
+                }
+            } // After POST finishes get RESPONSE:
+
+            int code = con.getResponseCode();
+            if ((code > 199 && code < 300) || (successCodes != null && Arrays.asList(successCodes).contains(code))) {
+                InputStream in = con.getInputStream();
+                if (in != null)
+                    try (InputStreamReader inr = new InputStreamReader(in)) {
+                        return JsonParser.parseReader(inr);
+                    }
+            } else {
+                JsonElement response = null;
+                InputStream in = con.getErrorStream();
+                if (in != null)
+                    try (InputStreamReader inr = new InputStreamReader(in)) {
+                        response = JsonParser.parseReader(inr);
+                    }
+                throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + con.getResponseMessage() + "\njson: \n" + new GsonBuilder().setPrettyPrinting().create().toJson(response));
+            }
+        } catch (IOException | HttpErrorException e) {
+            if (con != null) con.disconnect();
+            throw e;
+        } finally {
+            if (con != null) con.disconnect();
+        }
+        return null;
+    }
+
+    public static JsonElement post(String url, JsonElement element) throws IOException, HttpErrorException {
+        return get("POST", url, element, (Integer[]) null);
+    }
+
+    public static JsonElement post(String url, JsonElement element, Integer... successCodes) throws IOException, HttpErrorException {
+        return get("POST", url, element, successCodes);
+    }
+
+    public static JsonElement patch(String url, JsonElement element) throws IOException, HttpErrorException {
+        return get("PATCH", url, element, (Integer[]) null);
+    }
+
+    public static JsonElement patch(String url, JsonElement element, Integer... successCodes) throws IOException, HttpErrorException {
+        return get("PATCH", url, element, successCodes);
+    }
+
+    public static JsonElement delete(String url) throws IOException, HttpErrorException {
+        return get("DELETE", url, null, 204);
+    }
+
+    public static JsonElement delete(String url, Integer... successCodes) throws IOException, HttpErrorException {
+        return get("DELETE", url, null, successCodes);
+    }
 }
