@@ -1,5 +1,5 @@
 # jlib
-Frequently used code across all Java projects inside one jar.
+Frequently used code across all my Java projects inside one jar.
 [Click here for maven/gradle/sbt/leinigen instructions](https://jitpack.io/#Osiris-Team/AutoPlug-Core/LATEST) (Java 8 or higher required).
 
 ### Logging
