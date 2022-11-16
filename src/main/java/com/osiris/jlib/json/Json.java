@@ -125,7 +125,7 @@ public class Json {
                     try{
                         return JsonParser.parseString(s);
                     } catch (Throwable e) {
-                        throw new IOException("Issues while parsing json: "+e.getMessage()+" in: \n"+s, e);
+                        throw new IOException("Issues while parsing json: \nurl: "+url+" \nmessage: "+e.getMessage()+" \njson: \n"+s, e);
                     }
                 }
             } else {
@@ -136,7 +136,7 @@ public class Json {
                     try{
                         response = JsonParser.parseString(s);
                     } catch (Throwable e) {
-                        throw new IOException("Issues while parsing json: "+e.getMessage()+" in: \n"+s, e);
+                        throw new IOException("Issues while parsing json: \nurl: "+url+" \nmessage: "+e.getMessage()+" \njson: \n"+s, e);
                     }
                 }
                 throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + con.getResponseMessage() + "\njson: \n" + new GsonBuilder().setPrettyPrinting().create().toJson(response));
