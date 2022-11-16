@@ -14,6 +14,18 @@ public class HttpErrorException extends Exception {
         this.httpErrorMessage = httpErrorMessage;
     }
 
+    public HttpErrorException(Throwable cause, int httpErrorCode, String httpErrorMessage) {
+        super(cause);
+        this.httpErrorCode = httpErrorCode;
+        this.httpErrorMessage = httpErrorMessage;
+    }
+
+    public HttpErrorException(Throwable cause, int httpErrorCode, String httpErrorMessage, String message) {
+        super(message, cause);
+        this.httpErrorCode = httpErrorCode;
+        this.httpErrorMessage = httpErrorMessage;
+    }
+
     public int getHttpErrorCode() {
         return httpErrorCode;
     }

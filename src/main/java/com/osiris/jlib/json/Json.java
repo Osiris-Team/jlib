@@ -129,17 +129,12 @@ public class Json {
                     }
                 }
             } else {
-                JsonElement response = null;
                 InputStream in = con.getErrorStream();
+                String s = null;
                 if (in != null){
-                    String s = Stream.toString(in);
-                    try{
-                        response = JsonParser.parseString(s);
-                    } catch (Throwable e) {
-                        throw new IOException("Issues while parsing json: \nurl: "+url+" \nmessage: "+e.getMessage()+" \njson: \n"+s, e);
-                    }
+                    s = Stream.toString(in);
                 }
-                throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + con.getResponseMessage() + "\njson: \n" + new GsonBuilder().setPrettyPrinting().create().toJson(response));
+                throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + con.getResponseMessage() + "\njson: \n" + s);
             }
         } catch (IOException | HttpErrorException e) {
             if (con != null) con.disconnect();
