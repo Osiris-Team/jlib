@@ -3,7 +3,7 @@ package com.osiris.jlib;
 import java.io.IOException;
 import java.nio.file.FileSystemLoopException;
 
-class UtilsFiles {
+public class UtilsFiles {
 
     /**
      * Force deletes the provided directory or file recursively.
