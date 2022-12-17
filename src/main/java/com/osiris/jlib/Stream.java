@@ -8,14 +8,12 @@
 
 package com.osiris.jlib;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Stream {
+
     public static String toString(InputStream in) throws IOException {
         if (in == null) return null;
         StringBuilder s = new StringBuilder();
@@ -27,6 +25,7 @@ public class Stream {
         }
         return s.toString();
     }
+
     public static List<String> toList(InputStream in) throws IOException {
         List<String> list = new ArrayList<>();
         if (in == null) return list;
@@ -37,5 +36,11 @@ public class Stream {
             }
         }
         return list;
+    }
+
+    public static void write(String in, OutputStream out) throws IOException {
+        try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out))){
+            writer.write(in);
+        }
     }
 }

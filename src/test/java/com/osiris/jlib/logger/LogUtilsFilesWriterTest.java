@@ -15,7 +15,7 @@ import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class LogFileWriterTest {
+class LogUtilsFilesWriterTest {
 
     @Test
     void writeToLogTest(){
