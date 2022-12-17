@@ -15,6 +15,26 @@ The `Json` class contains static methods for retrieving Json from an `URL`
 and parsing it from/to a String. Under the hood it uses the `Gson` library (probably
 the fastest Json library for Java).
 
+The abstract `JsonFile` class is optimal when you need json configurations
+Gson serialisation for example for configurations.
+```java
+class MyConfig extends JsonFile{
+    public static String appName = "My cool app";
+    public static String version = 1;
+    
+    public Person(){
+        
+        // This creates the file if not existing and fills it
+        // with the default values above.
+        super(new File("my-config.json"));
+        
+        version = 2;
+        save(); // To update "version" also in person.json (async).
+        saveNow(); // Same as above, but blocks until finished.
+    }
+}
+```
+
 ### Sorting
 The `QuickSort` class implements the QuickSort algorithm and provides useful
 static methods to sort **arrays** and **lists** of any type (including `JsonArrays`). Usage example:

@@ -7,25 +7,26 @@ import com.osiris.jlib.Reflect;
 import com.osiris.jlib.Stream;
 
 import java.io.*;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class JsonFile<T> {
-    public static Gson parser = new GsonBuilder().registerTypeAdapter(File.class, new FileTypeAdapter())
+public abstract class JsonFile {
+    public static transient Gson parser = new GsonBuilder().registerTypeAdapter(File.class, new FileTypeAdapter())
+            .excludeFieldsWithModifiers(java.lang.reflect.Modifier.TRANSIENT, java.lang.reflect.Modifier.PRIVATE) // ONLY exclude transient, to allow including static fields too
             .setPrettyPrinting().create();
 
-    public final File file;
     private final AtomicBoolean save = new AtomicBoolean(false);
-    public T data;
+    private final File file;
 
     /**
      * @param file     can NOT null! Path to your .json file. If not exists gets created.
      * @param dataType can NOT be null! The data objects' type/class.
      */
-    public JsonFile(File file, Class<T> dataType) {
+    public JsonFile(File file) {
         Objects.requireNonNull(file);
         this.file = file;
         try {
@@ -33,10 +34,16 @@ public class JsonFile<T> {
                 if (!file.exists()) {
                     file.getParentFile().mkdirs();
                     file.createNewFile();
-                    this.data = Reflect.newInstance(dataType);
                     save(); // Write defaults
-                } else // Read existing
-                    this.data = parser.fromJson(new BufferedReader(new FileReader(file)), dataType);
+                } else { // Read existing
+                    Class<?> clazz = getClass();
+                    Object instance = parser.fromJson(new BufferedReader(new FileReader(file)), getClass());
+                    for (Field field : clazz.getDeclaredFields()) {
+                        field.setAccessible(true);
+                        field.set(this, field.get(instance));
+                    }
+                }
+
             }
             new Thread(() -> {
                 try {
@@ -49,7 +56,7 @@ public class JsonFile<T> {
                                     file.createNewFile();
                                 }
                                 StringWriter sw = new StringWriter(); // Passing the filewriter directly results in a blank file
-                                parser.toJson(data, sw);
+                                parser.toJson(this, sw);
                                 String out = sw.toString();
                                 Files.write(file.toPath(), out.getBytes(StandardCharsets.UTF_8));
                             }
@@ -63,6 +70,10 @@ public class JsonFile<T> {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public File getJsonFile(){
+        return file;
     }
 
     public void save() {
@@ -80,24 +91,21 @@ public class JsonFile<T> {
 
     public String toPrintString() {
         StringWriter sw = new StringWriter(); // Passing the filewriter directly results in a blank file
-        parser.toJson(data, sw);
+        parser.toJson(this, sw);
         return sw.toString();
     }
 
-    public JsonFile<T> writeTo(OutputStream out) throws IOException {
+    public void writeTo(OutputStream out) throws IOException {
         StringWriter sw = new StringWriter(); // Passing the filewriter directly results in a blank file
-        parser.toJson(data, sw);
+        parser.toJson(this, sw);
         Stream.write(sw.toString(), out);
-        return this;
     }
 
-    public JsonFile<T> writeTo(File file) throws IOException {
+    public void writeTo(File file) throws IOException {
         writeTo(new FileOutputStream(file));
-        return this;
     }
 
-    public JsonFile<T> writeTo(Path file) throws IOException {
+    public void writeTo(Path file) throws IOException {
         writeTo(new FileOutputStream(file.toFile()));
-        return this;
     }
 }
