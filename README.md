@@ -19,8 +19,8 @@ The abstract `JsonFile` class is optimal when you need json configurations for e
 It makes serialisation easy and removes boilerplate, here is an example:
 ```java
 class MyConfig extends JsonFile{
-    public static String appName = "My cool app";
-    public static String version = 1;
+    public String appName = "My cool app";
+    public String version = 1;
     
     public Person(){
         

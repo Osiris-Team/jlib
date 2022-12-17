@@ -3,13 +3,10 @@ package com.osiris.jlib.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.osiris.jlib.Reflect;
 import com.osiris.jlib.Stream;
 
 import java.io.*;
 import java.lang.reflect.Field;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -24,49 +21,20 @@ public abstract class JsonFile {
 
     /**
      * @param file     can NOT null! Path to your .json file. If not exists gets created.
-     * @param dataType can NOT be null! The data objects' type/class.
      */
     public JsonFile(File file) {
         Objects.requireNonNull(file);
         this.file = file;
         try {
-            synchronized (file) {
+            synchronized (this.file) {
                 if (!file.exists()) {
                     file.getParentFile().mkdirs();
                     file.createNewFile();
                     save(); // Write defaults
                 } else { // Read existing
-                    Class<?> clazz = getClass();
-                    Object instance = parser.fromJson(new BufferedReader(new FileReader(file)), getClass());
-                    for (Field field : clazz.getDeclaredFields()) {
-                        field.setAccessible(true);
-                        field.set(this, field.get(instance));
-                    }
+                    load();
                 }
-
             }
-            new Thread(() -> {
-                try {
-                    while (true) {
-                        Thread.sleep(1000);
-                        if (save.get()) {
-                            synchronized (file) {
-                                if (!file.exists()) {
-                                    file.getParentFile().mkdirs();
-                                    file.createNewFile();
-                                }
-                                StringWriter sw = new StringWriter(); // Passing the filewriter directly results in a blank file
-                                parser.toJson(this, sw);
-                                String out = sw.toString();
-                                Files.write(file.toPath(), out.getBytes(StandardCharsets.UTF_8));
-                            }
-                            save.set(false);
-                        }
-                    }
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }).start();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -76,16 +44,34 @@ public abstract class JsonFile {
         return file;
     }
 
-    public void save() {
-        save.set(true);
+    public void load() throws FileNotFoundException, IllegalAccessException {
+        Class<?> clazz = getClass();
+        Object instance = parser.fromJson(new BufferedReader(new FileReader(file)), getClass());
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+            field.set(this, field.get(instance));
+        }
     }
 
-    public void saveNow() {
-        save();
-        try {
-            while (save.get()) Thread.sleep(10);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+    public void save() {
+        save.set(true);
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+                if (save.get()) {
+                    save.set(false);
+                    saveNow();
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
+    }
+
+    public void saveNow() throws IOException {
+        synchronized (file) {
+            writeTo(file);
         }
     }
 
