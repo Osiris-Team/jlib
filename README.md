@@ -15,8 +15,8 @@ The `Json` class contains static methods for retrieving Json from an `URL`
 and parsing it from/to a String. Under the hood it uses the `Gson` library (probably
 the fastest Json library for Java).
 
-The abstract `JsonFile` class is optimal when you need json configurations
-Gson serialisation for example for configurations.
+The abstract `JsonFile` class is optimal when you need json configurations for example.
+It makes serialisation easy and without boilerplat, here is an example:
 ```java
 class MyConfig extends JsonFile{
     public static String appName = "My cool app";
