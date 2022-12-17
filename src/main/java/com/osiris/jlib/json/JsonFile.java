@@ -3,12 +3,10 @@ package com.osiris.jlib.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.internal.Streams;
 import com.osiris.jlib.Reflect;
 import com.osiris.jlib.Stream;
 
 import java.io.*;
-import java.lang.reflect.ParameterizedType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,17 +18,17 @@ public class JsonFile<T> {
             .setPrettyPrinting().create();
 
     public final File file;
-    public T data;
     private final AtomicBoolean save = new AtomicBoolean(false);
+    public T data;
 
     /**
-     * @param file can NOT null! Path to your .json file. If not exists gets created.
+     * @param file     can NOT null! Path to your .json file. If not exists gets created.
      * @param dataType can NOT be null! The data objects' type/class.
      */
-    public JsonFile(File file, Class<T> dataType){
+    public JsonFile(File file, Class<T> dataType) {
         Objects.requireNonNull(file);
         this.file = file;
-        try{
+        try {
             synchronized (file) {
                 if (!file.exists()) {
                     file.getParentFile().mkdirs();
@@ -38,13 +36,13 @@ public class JsonFile<T> {
                     this.data = Reflect.newInstance(dataType);
                     save(); // Write defaults
                 } else // Read existing
-                    this.data = (T) parser.fromJson(new BufferedReader(new FileReader(file)), dataType);
+                    this.data = parser.fromJson(new BufferedReader(new FileReader(file)), dataType);
             }
             new Thread(() -> {
-                try{
-                    while (true){
+                try {
+                    while (true) {
                         Thread.sleep(1000);
-                        if(save.get()){
+                        if (save.get()) {
                             synchronized (file) {
                                 if (!file.exists()) {
                                     file.getParentFile().mkdirs();
@@ -67,7 +65,7 @@ public class JsonFile<T> {
         }
     }
 
-    public void save(){
+    public void save() {
         save.set(true);
     }
 
@@ -80,7 +78,7 @@ public class JsonFile<T> {
         }
     }
 
-    public String toPrintString(){
+    public String toPrintString() {
         StringWriter sw = new StringWriter(); // Passing the filewriter directly results in a blank file
         parser.toJson(data, sw);
         return sw.toString();

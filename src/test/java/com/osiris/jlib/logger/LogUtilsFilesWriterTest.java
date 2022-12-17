@@ -18,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class LogUtilsFilesWriterTest {
 
     @Test
-    void writeToLogTest(){
-        File file = new File(System.getProperty("user.dir")+"/src/test/test.log");
-        try{
+    void writeToLogTest() {
+        File file = new File(System.getProperty("user.dir") + "/src/test/test.log");
+        try {
             if (file.exists())
                 file.delete();
             file.createNewFile();
@@ -29,7 +29,7 @@ class LogUtilsFilesWriterTest {
         }
         LogFileWriter.setLogWriterForFile(file);
         LogFileWriter.writeToLog(Ansi.ansi().fg(Ansi.Color.BLUE).a("Hello!"));
-        assertTrue(file.length()>0);
+        assertTrue(file.length() > 0);
     }
 
 }

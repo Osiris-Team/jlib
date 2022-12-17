@@ -37,11 +37,11 @@ public class Reflect {
     /**
      * Returns the declared constructor with the least parameters.
      */
-    public static Constructor getTopConstructor(Class<?> clazz){
+    public static Constructor getTopConstructor(Class<?> clazz) {
         Constructor<?> result = null;
-        for (Constructor<?> c :clazz.getDeclaredConstructors()){
-            if(result == null) result = c;
-            else if(c.getParameterCount() < result.getParameterCount()) result = c;
+        for (Constructor<?> c : clazz.getDeclaredConstructors()) {
+            if (result == null) result = c;
+            else if (c.getParameterCount() < result.getParameterCount()) result = c;
         }
         return result;
     }

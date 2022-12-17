@@ -12,7 +12,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ALTest {
 
@@ -52,8 +52,8 @@ class ALTest {
         new AL().start();
 
         AL.actionsOnInfoMessageEvent.add(msg -> {
-           Assertions.assertTrue(msg.getType().equals(Message.Type.INFO));
-           System.out.println("Executed infoMessageEvent successfully!");
+            Assertions.assertTrue(msg.getType().equals(Message.Type.INFO));
+            System.out.println("Executed infoMessageEvent successfully!");
         });
 
         AL.actionsOnDebugMessageEvent.add(msg -> {
@@ -92,8 +92,8 @@ class ALTest {
 
     @Test
     void testMirror() throws IOException {
-        File file = new File(System.getProperty("user.dir")+"/test.log");
-        File fileErr = new File(System.getProperty("user.dir")+"/test-err.log");
+        File file = new File(System.getProperty("user.dir") + "/test.log");
+        File fileErr = new File(System.getProperty("user.dir") + "/test-err.log");
         AL.mirrorSystemStreams(file, fileErr);
         System.out.println("This is out!");
         System.err.println("This is err!");

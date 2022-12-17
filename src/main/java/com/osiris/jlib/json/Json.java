@@ -1,7 +1,6 @@
 package com.osiris.jlib.json;
 
 import com.google.gson.*;
-import com.google.gson.internal.Streams;
 import com.osiris.jlib.Stream;
 import com.osiris.jlib.json.exceptions.HttpErrorException;
 import com.osiris.jlib.json.exceptions.WrongJsonTypeException;
@@ -120,18 +119,18 @@ public class Json {
             int code = con.getResponseCode();
             if ((code > 199 && code < 300) || (successCodes != null && Arrays.asList(successCodes).contains(code))) {
                 InputStream in = con.getInputStream();
-                if (in != null){
+                if (in != null) {
                     String s = Stream.toString(in);
-                    try{
+                    try {
                         return JsonParser.parseString(s);
                     } catch (Throwable e) {
-                        throw new IOException("Issues while parsing json: \nurl: "+url+" \nmessage: "+e.getMessage()+" \njson: \n"+s, e);
+                        throw new IOException("Issues while parsing json: \nurl: " + url + " \nmessage: " + e.getMessage() + " \njson: \n" + s, e);
                     }
                 }
             } else {
                 InputStream in = con.getErrorStream();
                 String s = null;
-                if (in != null){
+                if (in != null) {
                     s = Stream.toString(in);
                 }
                 throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + con.getResponseMessage() + "\njson: \n" + s);

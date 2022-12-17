@@ -28,41 +28,41 @@ public class UtilsTime {
         StringBuilder s = new StringBuilder();
         // years, months, days, hours, minutes, seconds
         int years = 0, months = 0, days = 0, hours = 0, minutes = 0, seconds = 0;
-        while(ms > 31556952000L){ // 1 year in ms
+        while (ms > 31556952000L) { // 1 year in ms
             ms -= 31556952000L;
             years++;
         }
-        while(ms > 2629800000L){ // 1 month in ms
+        while (ms > 2629800000L) { // 1 month in ms
             ms -= 2629800000L;
             months++;
         }
-        while(ms > 86400000){ // 1 day in ms
+        while (ms > 86400000) { // 1 day in ms
             ms -= 86400000;
             days++;
         }
-        while(ms > 3600000){ // 1 hour in ms
+        while (ms > 3600000) { // 1 hour in ms
             ms -= 3600000;
             hours++;
         }
-        while(ms > 60000){ // 1 minute in ms
+        while (ms > 60000) { // 1 minute in ms
             ms -= 60000;
             minutes++;
         }
-        while(ms > 1000){ // 1 second in ms
+        while (ms > 1000) { // 1 second in ms
             ms -= 1000;
             seconds++;
         }
-        if(years > 0)
+        if (years > 0)
             s.append(years).append((years > 1 ? " years " : " year "));
-        if(months > 0)
+        if (months > 0)
             s.append(months).append((months > 1 ? " months " : " month "));
-        if(days > 0)
+        if (days > 0)
             s.append(days).append((days > 1 ? " days " : " day "));
-        if(hours > 0)
+        if (hours > 0)
             s.append(hours).append((hours > 1 ? " hours " : " hour "));
-        if(minutes > 0)
+        if (minutes > 0)
             s.append(minutes).append((minutes > 1 ? " minutes " : " minute "));
-        if(seconds > 0){
+        if (seconds > 0) {
             seconds++; // Since the last remaining second doesn't get added in the loop above
             s.append(seconds).append((seconds > 1 ? " seconds " : " second "));
         }

@@ -120,7 +120,7 @@ public class AL {
             if (e != null) {
                 StackTraceElement[] stacktrace = e.getStackTrace();
                 if (stacktrace == null || stacktrace.length == 0) {
-                    e = new Exception(e.getMessage()+" (original exception had no stacktrace, thus created a new one to at least see the stacktrace to this warning)");
+                    e = new Exception(e.getMessage() + " (original exception had no stacktrace, thus created a new one to at least see the stacktrace to this warning)");
                     stacktrace = e.getStackTrace();
                 }
                 fileName = stacktrace[stacktrace.length - 1].getClassName() + " " + stacktrace[0].getClassName() + "." + stacktrace[0].getMethodName();

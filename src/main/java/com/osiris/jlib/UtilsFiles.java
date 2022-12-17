@@ -1,6 +1,5 @@
 package com.osiris.jlib;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystemLoopException;
 

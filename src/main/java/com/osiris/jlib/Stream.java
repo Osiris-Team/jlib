@@ -39,7 +39,7 @@ public class Stream {
     }
 
     public static void write(String in, OutputStream out) throws IOException {
-        try(BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out))){
+        try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out))) {
             writer.write(in);
         }
     }
