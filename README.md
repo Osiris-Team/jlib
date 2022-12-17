@@ -16,7 +16,7 @@ and parsing it from/to a String. Under the hood it uses the `Gson` library (prob
 the fastest Json library for Java).
 
 The abstract `JsonFile` class is optimal when you need json configurations for example.
-It makes serialisation easy and without boilerplat, here is an example:
+It makes serialisation easy and removes boilerplate, here is an example:
 ```java
 class MyConfig extends JsonFile{
     public static String appName = "My cool app";
