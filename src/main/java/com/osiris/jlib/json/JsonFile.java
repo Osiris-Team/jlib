@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 public abstract class JsonFile {
     public static transient Gson parser = new GsonBuilder().registerTypeAdapter(File.class, new FileTypeAdapter())
@@ -51,6 +52,25 @@ public abstract class JsonFile {
             field.setAccessible(true);
             field.set(this, field.get(instance));
         }
+    }
+
+    /**
+     * Starts a thread that executes {@link #save()} periodically. <br>
+     * @param msIntervall the amount of time in milliseconds, for the thread to wait until attempting a save operation.
+     */
+    public Thread startAutoSaveThread(long msIntervall, Consumer<Exception> onException){
+        Thread t = new Thread(() -> {
+            try{
+                while (true){
+                    Thread.sleep(msIntervall);
+                    saveNow();
+                }
+            } catch (Exception e) {
+                onException.accept(e);
+            }
+        });
+        t.start();
+        return t;
     }
 
     public void save() {
