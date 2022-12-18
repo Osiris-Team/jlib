@@ -3,10 +3,12 @@ package com.osiris.jlib.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.osiris.jlib.Reflect;
 import com.osiris.jlib.Stream;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,12 +47,28 @@ public abstract class JsonFile {
         return file;
     }
 
+    /**
+     * Replaces fields with the values from the .json file.
+     * @see #getJsonFile()
+     */
     public void load() throws FileNotFoundException, IllegalAccessException {
         Class<?> clazz = getClass();
-        Object instance = parser.fromJson(new BufferedReader(new FileReader(file)), getClass());
+        Object instanceFromFile = parser.fromJson(new BufferedReader(new FileReader(file)), getClass());
         for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
-            field.set(this, field.get(instance));
+            field.set(this, field.get(instanceFromFile));
+        }
+    }
+
+    /**
+     * Replaces fields with its default values.
+     */
+    public void loadDefaults() throws InvocationTargetException, InstantiationException, IllegalAccessException {
+        Class<?> clazz = getClass();
+        Object instanceWithDefaults = Reflect.newInstance(clazz);
+        for (Field field : clazz.getDeclaredFields()) {
+            field.setAccessible(true);
+            field.set(this, field.get(instanceWithDefaults));
         }
     }
 
