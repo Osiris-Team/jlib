@@ -6,7 +6,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 
 public class Reflect {
-    public static <T> T newInstance(Class<T> type) throws InstantiationException, IllegalAccessException, InvocationTargetException {
+    public static <T> T newInstance(Class<T> type, Object... paramValues) throws InstantiationException, IllegalAccessException, InvocationTargetException {
         // CLASS IS NOT ENUM
         // Create an instance/object of the provided type, which then later gets returned:
         T instance;
@@ -16,16 +16,23 @@ public class Reflect {
             Constructor<?> constructor = getTopConstructor(type);
             Parameter[] params = constructor.getParameters();
             if (params.length > 0) {
-                Object[] paramValues = new Object[params.length];
-                for (int i = 0; i < params.length; i++) {
-                    paramValues[i] = 0;
+                Object[] actualParamValues = new Object[params.length];
+                int iStart = 0;
+                if(paramValues != null){
+                    iStart = paramValues.length;
+                    for (int i = 0; i < paramValues.length; i++) {
+                        actualParamValues[i] = paramValues[i];
+                    }
+                }
+                for (int i = iStart; i < params.length; i++) {
+                    actualParamValues[i] = 0;
                     if (isPrimitive(params[i].getType()))
-                        paramValues[i] = 0;
+                        actualParamValues[i] = 0;
                     else
-                        paramValues[i] = null;
+                        actualParamValues[i] = null;
                 }
                 if (!Modifier.isPublic(constructor.getModifiers())) constructor.setAccessible(true);
-                instance = (T) constructor.newInstance(paramValues);
+                instance = (T) constructor.newInstance(actualParamValues);
             } else {
                 if (!Modifier.isPublic(constructor.getModifiers())) constructor.setAccessible(true);
                 instance = (T) constructor.newInstance();

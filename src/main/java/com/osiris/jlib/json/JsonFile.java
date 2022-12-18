@@ -22,7 +22,9 @@ public abstract class JsonFile {
     private final AtomicBoolean save = new AtomicBoolean(false);
     private final File file;
 
+
     /**
+     * Remember to call {@link #load()} after this.
      * @param file     can NOT null! Path to your .json file. If not exists gets created.
      */
     public JsonFile(File file) {
@@ -34,8 +36,6 @@ public abstract class JsonFile {
                     file.getParentFile().mkdirs();
                     file.createNewFile();
                     save(); // Write defaults
-                } else { // Read existing
-                    load();
                 }
             }
         } catch (Exception e) {
@@ -65,7 +65,7 @@ public abstract class JsonFile {
      */
     public void loadDefaults() throws InvocationTargetException, InstantiationException, IllegalAccessException {
         Class<?> clazz = getClass();
-        Object instanceWithDefaults = Reflect.newInstance(clazz);
+        Object instanceWithDefaults = Reflect.newInstance(clazz, file); // TODO add new constructor params here too
         for (Field field : clazz.getDeclaredFields()) {
             field.setAccessible(true);
             field.set(this, field.get(instanceWithDefaults));
