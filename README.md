@@ -23,6 +23,7 @@ class MyConfig extends JsonFile{
     public String version = 1;
     
     public Person(){
+        //load() // Do NOT call load inside the constructor
         
         // This creates the file if not existing and fills it
         // with the default values above.
