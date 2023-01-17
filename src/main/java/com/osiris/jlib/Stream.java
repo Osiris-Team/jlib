@@ -14,7 +14,23 @@ import java.util.List;
 
 public class Stream {
 
+    /**
+     * Slower but contains exactly the same chars from the stream.
+     */
     public static String toString(InputStream in) throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))){
+            int c;
+            while ((c = reader.read()) != -1)
+                stringBuilder.append(c);
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Faster but may contain other next-line char.
+     */
+    public static String toStringFast(InputStream in) throws IOException {
         if (in == null) return null;
         StringBuilder s = new StringBuilder();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {

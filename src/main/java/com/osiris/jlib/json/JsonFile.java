@@ -19,12 +19,11 @@ public abstract class JsonFile {
             .excludeFieldsWithModifiers(java.lang.reflect.Modifier.TRANSIENT, java.lang.reflect.Modifier.PRIVATE) // ONLY exclude transient, to allow including static fields too
             .setPrettyPrinting().create();
 
-    private final AtomicBoolean save = new AtomicBoolean(false);
-    private final File file;
+    private final transient AtomicBoolean save = new AtomicBoolean(false);
+    private final transient File file;
 
 
     /**
-     * Remember to call {@link #load()} after this.
      * @param file     can NOT null! Path to your .json file. If not exists gets created.
      */
     public JsonFile(File file) {
@@ -55,8 +54,13 @@ public abstract class JsonFile {
         Class<?> clazz = getClass();
         Object instanceFromFile = parser.fromJson(new BufferedReader(new FileReader(file)), getClass());
         for (Field field : clazz.getDeclaredFields()) {
-            field.setAccessible(true);
-            field.set(this, field.get(instanceFromFile));
+            try{
+                field.setAccessible(true);
+                field.set(this, field.get(instanceFromFile));
+            } catch (NullPointerException e) {
+                // Happens when load() is called on an empty file
+                // thus null fields won't be set
+            }
         }
     }
 

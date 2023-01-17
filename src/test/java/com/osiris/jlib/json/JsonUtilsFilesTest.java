@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class JsonUtilsFilesTest {
 
@@ -15,6 +16,8 @@ class JsonUtilsFilesTest {
 
         // Check defaults
         Person person = new Person(new File(System.getProperty("user.dir") + "/person.json"));
+        person.load();
+        assertNotNull(person.name);
         assertEquals("Peter", person.name);
         assertEquals(44, person.age);
         assertEquals(new File(System.getProperty("user.dir") + "/data.txt").toString(), person.file.toString());
