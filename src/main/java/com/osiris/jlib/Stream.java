@@ -22,7 +22,7 @@ public class Stream {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(in))){
             int c;
             while ((c = reader.read()) != -1)
-                stringBuilder.append(c);
+                stringBuilder.append((char) c);
         }
         return stringBuilder.toString();
     }
