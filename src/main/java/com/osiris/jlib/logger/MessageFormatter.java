@@ -168,7 +168,7 @@ public class MessageFormatter {
                 List<Throwable> causeList = new ArrayList<>();
                 int i = 1;
                 while (cause != null) {
-                    builder.append(tags).append("[!] Cause: " + cause.getMessage() + " [!]\n");
+                    builder.append(tags).append("[!] Cause ("+i+"): " + cause.getMessage() + " [!]\n");
                     builder.append(tags).append("[!] Cause-Type: " + cause.getClass().getCanonicalName() + " [!]\n");
                     builder.append(tags).append("[!] Cause-Stacktrace: [!]\n");
                     for (StackTraceElement element :
