@@ -11,6 +11,8 @@ package com.osiris.jlib.logger;
 import org.fusesource.jansi.Ansi;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Formats messages into something useful.
@@ -131,14 +133,23 @@ public class MessageFormatter {
                             builder.append(tags).append(" " + element.toString() + "\n");
                         }
                     Throwable cause = msg.getException().getCause();
-                    if (cause != null) {
-                        builder.append(tags).append(" Cause: " + cause.getMessage() + "\n");
+                    List<Throwable> causeList = new ArrayList<>();
+                    int i = 1;
+                    while (cause != null) {
+                        builder.append(tags).append(" Cause ("+i+"): " + cause.getMessage() + "\n");
                         builder.append(tags).append(" Cause-Type: " + cause.getClass().getCanonicalName() + "\n");
                         builder.append(tags).append(" Cause-Stacktrace: \n");
                         for (StackTraceElement element :
                                 cause.getStackTrace()) {
                             builder.append(tags).append(" " + element.toString() + "\n");
                         }
+                        if(causeList.contains(cause)){
+                            builder.append(tags).append(" Circular cause/exception detected (that would result in infinite loop) thus stopped printing.\n");
+                            break;
+                        }
+                        causeList.add(cause);
+                        cause = cause.getCause();
+                        i++;
                     }
                 }
                 builder.append(tags).append(" ================================\n");
@@ -154,7 +165,9 @@ public class MessageFormatter {
                     builder.append(tags).append("[!] " + element.toString() + " [!]\n");
                 }
                 Throwable cause = msg.getException().getCause();
-                if (cause != null) {
+                List<Throwable> causeList = new ArrayList<>();
+                int i = 1;
+                while (cause != null) {
                     builder.append(tags).append("[!] Cause: " + cause.getMessage() + " [!]\n");
                     builder.append(tags).append("[!] Cause-Type: " + cause.getClass().getCanonicalName() + " [!]\n");
                     builder.append(tags).append("[!] Cause-Stacktrace: [!]\n");
@@ -162,6 +175,13 @@ public class MessageFormatter {
                             cause.getStackTrace()) {
                         builder.append(tags).append("[!] " + element.toString() + " [!]\n");
                     }
+                    if(causeList.contains(cause)){
+                        builder.append(tags).append(" Circular cause/exception detected (that would result in infinite loop) thus stopped printing.\n");
+                        break;
+                    }
+                    causeList.add(cause);
+                    cause = cause.getCause();
+                    i++;
                 }
 
                 builder.append(tags).append("[!] " + AL.NAME + " is shutting down in 10 seconds. Log saved to " + AL.DIR_FULL.getAbsolutePath() + ". [!]\n");
