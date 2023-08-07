@@ -50,4 +50,11 @@ new QuickSort().sortJsonArray(arr, (thisEl, otherEl) -> {
 ### Update finder
 The `Search` class contains methods for finding assets/updates on Maven and Github.
 
+### TCP Client and Server
+A blazing fast, async, TCP client and server using [Netty](),
+with in/out in the style of DataInputStream 
+and DataOutputStream, with additional goodies like writing/reading files.
+
+This makes upgrading your current app that uses the default
+Java Sockets API, a lot easier.
 
