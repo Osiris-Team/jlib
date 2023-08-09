@@ -53,8 +53,10 @@ The `Search` class contains methods for finding assets/updates on Maven and Gith
 ### TCP Client and Server
 A blazing fast, async, TCP client and server using [Netty](),
 with in/out in the style of DataInputStream 
-and DataOutputStream, with additional goodies like writing/reading files.
+and DataOutputStream.
 
 This makes upgrading your current app that uses the default
-Java Sockets API, a lot easier.
-
+Java Sockets API, a lot easier. Additional features:
+- Graceful close, where both parties (host and remote)
+get notified and transmission of data doesn't end abruptly.
+- Send/Receive files or streams.

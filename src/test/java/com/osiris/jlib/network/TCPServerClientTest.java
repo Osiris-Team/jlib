@@ -1,10 +1,13 @@
 package com.osiris.jlib.network;
 
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TCPServerClientTest {
     long bytesSentClient = 0;
@@ -12,61 +15,119 @@ class TCPServerClientTest {
 
     /**
      * Creates a local server and client,
-     * and lets them communicate for 10 seconds before returning and closing both.
+     * and lets them communicate until both close before returning and closing both.
      * @param codeOnServer
      * @param codeOnClient
      * @return
      */
-    public static TCPServer initLocalServerAndClient(Consumer<TCPClient> codeOnServer,
-                                                     Consumer<TCPClient> codeOnClient){
+    public static TCPServer initLocalServerAndClient(BiConsumer<TCPServer, TCPClient> codeOnServer,
+                                                     Consumer<TCPClient> codeOnClient) throws Exception {
         TCPServer server = new TCPServer();
         server.onClientConnected = c -> {
-            c.readers.addFirst(new LoggingHandler(LogLevel.INFO));
-            codeOnServer.accept(c);
+            //c.readers.addFirst(new LoggingHandler(LogLevel.INFO));
+            codeOnServer.accept(server, c);
         };
-        try {
-            server.open("localhost", 3555, false, true);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        try{
-            TCPClient client = new TCPClient();
-            client.open("localhost", 3555, false, true);
-            client.readers.addFirst(new LoggingHandler(LogLevel.INFO));
-            codeOnClient.accept(client);
-            for (int i = 0; i < 100; i++) { // 10 seconds
-                if(server.isClosed() || client.isClosed()) break;
-                Thread.sleep(100);
-            }
-            server.close();
-            client.close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        server.open("localhost", 3555, false, true);
+
+        TCPClient client = new TCPClient();
+        client.open("localhost", 3555, false, true);
+        //client.readers.addFirst(new LoggingHandler(LogLevel.INFO));
+        codeOnClient.accept(client);
+        boolean serverOpen = true, clientOpen = true;
+        while((serverOpen = server.isOpen()) || (clientOpen = client.isOpen())) {
+            System.out.println(serverOpen +" "+clientOpen);
+            Thread.sleep(1000);
         }
         return server;
     }
 
+    public static boolean isSortedAscendingWith1Step(List<Integer> list) {
+        return isSortedAscendingWithSameStep(list, 1);
+    }
+
+    public static boolean isSortedAscendingWithSameStep(List<Integer> list, int step) {
+        for (int i = 1; i < list.size(); i++) {
+            try{
+                list.get(i + 1);
+            } catch (Exception e) {
+                break;
+            }
+            int expectedValue = list.get(i) + 1;
+            int actualValue = list.get(i+1);
+            if (expectedValue == list.get(i + 1)) {
+                continue;
+            } else{
+                System.err.println("isSortedAscendingWithSameStep failed at index "+i+" expected "
+                +expectedValue+" but got "+actualValue);
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Test
     void clientToServer() throws Exception {
-        initLocalServerAndClient(sc -> {
-            sc.in.readUTF().thenAccept(s -> {
-                System.out.println("Received client to server msg: "+s);
-                sc.close_();
+        initLocalServerAndClient((s, sc) -> {
+            sc.in.readUTF().thenAccept(v -> {
+                System.out.println("Received client to server msg: "+v);
+                s.close_();
             });
         }, c -> {
             c.out.writeUTF("Hello world!");
+            c.close_();
         });
     }
 
     @Test
     void serverToClient() throws Exception {
-        initLocalServerAndClient(sc -> {
+        initLocalServerAndClient((s, sc)  -> {
             sc.out.writeUTF("Hello world!");
+            s.close_();
         }, c -> {
             c.in.readUTF().thenAccept(s -> {
                 System.out.println("Received server to client msg: "+ s);
                 c.close_();
             });
+        });
+    }
+
+    @Test
+    void clientToServer100000() throws Exception {
+        initLocalServerAndClient((s, sc) -> {
+            List<Integer> l = new ArrayList<>();
+            for (int i = 0; i < 100000; i++) {
+                sc.in.readInt().thenAccept(v -> {
+                    l.add(v);
+                });
+            }
+            while (l.size() != 100000) Thread.yield();
+            assertTrue(isSortedAscendingWith1Step(l));
+            s.close_();
+        }, c -> {
+            for (int i = 0; i < 100000; i++) {
+                c.out.writeInt(i);
+            }
+            c.close_();
+        });
+    }
+
+    @Test
+    void serverToClient100000() throws Exception {
+        initLocalServerAndClient((s, sc) -> {
+            for (int i = 0; i < 100000; i++) {
+                sc.out.writeInt(i);
+            }
+            s.close_();
+        }, c -> {
+            List<Integer> l = new ArrayList<>();
+            for (int i = 0; i < 100000; i++) {
+                c.in.readInt().thenAccept(v -> {
+                    l.add(v);
+                });
+            }
+            while (l.size() != 100000) Thread.yield();
+            assertTrue(isSortedAscendingWith1Step(l));
+            c.close_();
         });
     }
 }

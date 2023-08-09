@@ -1,26 +1,36 @@
 package com.osiris.jlib.network;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class Input{
+public class Input {
     public TCPClient client;
-    protected List<CompletableFuture<ByteBuf>> pendingByteBuf = new ArrayList<>(0);
-    protected List<CompletableFuture<String>> pendingString = new ArrayList<>(0);
-    protected List<CompletableFuture<Boolean>> pendingBoolean = new ArrayList<>(0);
-    protected List<CompletableFuture<Short>> pendingShort = new ArrayList<>(0);
-    protected List<CompletableFuture<Integer>> pendingInteger = new ArrayList<>(0);
-    protected List<CompletableFuture<Long>> pendingLong = new ArrayList<>(0);
-    protected List<CompletableFuture<Float>> pendingFloat = new ArrayList<>(0);
-    protected List<CompletableFuture<Double>> pendingDouble = new ArrayList<>(0);
+    /**
+     * @see Output#writeID
+     */
+    protected int readID = 0;
+    protected MessageReader<ByteBuf> pendingByteBuf;
+    protected MessageReader<String> pendingString;
+    protected MessageReader<Boolean> pendingBoolean;
+    protected MessageReader<Short> pendingShort;
+    protected MessageReader<Integer> pendingInteger;
+    protected MessageReader<Long> pendingLong;
+    protected MessageReader<Float> pendingFloat;
+    protected MessageReader<Double> pendingDouble;
+    protected MessageReader<Close> pendingClose;
 
+    /**
+     * CHECKLIST for adding a new TYPE to read: <br>
+     * 1. Create and add handler in this constructor. <br>
+     * 2. Create list that holds completable futures above. <br>
+     * 3. Create read method that adds a completable future to that list. <br>
+     * 4. Create write method in {@link Output}. <br>
+     * 5. Add the list to {@link Output#writeClose(CompletableFuture)}. <br>
+     *
+     * @param client
+     */
     public Input(TCPClient client) {
         this.client = client;
         Consumer<Throwable> onError = e -> {
@@ -33,188 +43,61 @@ public class Input{
             }
         };
         // ByteBuf
-        client.readers.addLast(new SimpleChannelInboundHandler<ByteBuf>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, ByteBuf msg) throws Exception {
-                pendingByteBuf.get(0).complete(msg);
-                pendingByteBuf.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingByteBuf = new MessageReader<>(ByteBuf.class, true, onError));
         // String
-        client.readers.addLast(new SimpleChannelInboundHandler<String>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, String msg) throws Exception {
-                pendingString.get(0).complete(msg);
-                pendingString.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingString = new MessageReader<>(String.class, true, onError));
         // Boolean
-        client.readers.addLast(new SimpleChannelInboundHandler<Boolean>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, Boolean msg) throws Exception {
-                pendingBoolean.get(0).complete(msg);
-                pendingBoolean.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingBoolean = new MessageReader<>(Boolean.class, true, onError));
         // Short
-        client.readers.addLast(new SimpleChannelInboundHandler<Short>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, Short msg) throws Exception {
-                pendingShort.get(0).complete(msg);
-                pendingShort.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingShort = new MessageReader<>(Short.class, true, onError));
         // Int
-        client.readers.addLast(new SimpleChannelInboundHandler<Integer>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, Integer msg) throws Exception {
-                pendingInteger.get(0).complete(msg);
-                pendingInteger.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingInteger = new MessageReader<>(Integer.class, true, onError));
         // Long
-        client.readers.addLast(new SimpleChannelInboundHandler<Long>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, Long msg) throws Exception {
-                pendingLong.get(0).complete(msg);
-                pendingLong.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingLong = new MessageReader<>(Long.class, true, onError));
         // Float
-        client.readers.addLast(new SimpleChannelInboundHandler<Float>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, Float msg) throws Exception {
-                pendingFloat.get(0).complete(msg);
-                pendingFloat.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingFloat = new MessageReader<>(Float.class, true, onError));
         // Double
-        client.readers.addLast(new SimpleChannelInboundHandler<Double>() {
-            @Override
-            protected void channelRead0(ChannelHandlerContext ctx, Double msg) throws Exception {
-                pendingDouble.get(0).complete(msg);
-                pendingDouble.remove(0);
-            }
-            @Override
-            public void channelReadComplete(ChannelHandlerContext ctx) {
-                ctx.flush();
-            }
-
-            @Override
-            public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-                onError.accept(cause);
-            }
-        });
+        client.readers.addLast(pendingDouble = new MessageReader<>(Double.class, true, onError));
+        // Close
+        client.readers.addLast(pendingClose = new MessageReader<>(Close.class, true, onError));
     }
 
-    public CompletableFuture<ByteBuf> readBytes()  {
-        CompletableFuture<ByteBuf> f = new CompletableFuture<>();
-        pendingByteBuf.add(f);
-        return f;
+    public CompletableFuture<ByteBuf> readBytes() {
+        return pendingByteBuf.read();
     }
 
-    public final CompletableFuture<String> readUTF()  {
-        CompletableFuture<String> f = new CompletableFuture<>();
-        pendingString.add(f);
-        return f;
+    public final CompletableFuture<String> readUTF() {
+        return pendingString.read();
     }
 
-    public final CompletableFuture<Boolean> readBoolean()  {
-        CompletableFuture<Boolean> f = new CompletableFuture<>();
-        pendingBoolean.add(f);
-        return f;
+    public final CompletableFuture<Boolean> readBoolean() {
+        return pendingBoolean.read();
     }
 
-    public final CompletableFuture<Short> readShort()  {
-        CompletableFuture<Short> f = new CompletableFuture<>();
-        pendingShort.add(f);
-        return f;
+    public final CompletableFuture<Short> readShort() {
+        return pendingShort.read();
     }
 
-    public final CompletableFuture<Integer> readInt()  {
-        CompletableFuture<Integer> f = new CompletableFuture<>();
-        pendingInteger.add(f);
-        return f;
+    public final CompletableFuture<Integer> readInt() {
+        return pendingInteger.read();
     }
 
-    public final CompletableFuture<Long> readLong()  {
-        CompletableFuture<Long> f = new CompletableFuture<>();
-        pendingLong.add(f);
-        return f;
+    public final CompletableFuture<Long> readLong() {
+        return pendingLong.read();
     }
 
-    public final CompletableFuture<Float> readFloat()  {
-        CompletableFuture<Float> f = new CompletableFuture<>();
-        pendingFloat.add(f);
-        return f;
+    public final CompletableFuture<Float> readFloat() {
+        return pendingFloat.read();
     }
 
-    public final CompletableFuture<Double> readDouble()  {
-        CompletableFuture<Double> f = new CompletableFuture<>();
-        pendingDouble.add(f);
-        return f;
+    public final CompletableFuture<Double> readDouble() {
+        return pendingDouble.read();
+    }
+
+    /**
+     * See bottom of constructor for details.
+     */
+    public final CompletableFuture<Close> readClose() {
+        return pendingClose.read();
     }
 }

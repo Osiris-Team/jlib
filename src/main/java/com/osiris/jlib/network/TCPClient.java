@@ -1,5 +1,6 @@
 package com.osiris.jlib.network;
 
+import com.osiris.jlib.network.utils.TCPUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
@@ -7,15 +8,12 @@ import io.netty.channel.local.LocalChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.logging.LogLevel;
-import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class TCPClient implements AutoCloseable {
+public class TCPClient {
     public EventLoopGroup group;
     public ChannelFuture future;
     public Channel socket;
@@ -33,8 +31,9 @@ public class TCPClient implements AutoCloseable {
      * @throws Exception
      */
     public void open(String host, int port, boolean ssl, boolean strictLocal) throws Exception {
+        System.out.println(TCPUtils.simpleName(this) + ": open");
         close();
-        final SslContext sslCtx = ssl ? ServerUtil.buildSslContext() : null;
+        final SslContext sslCtx = ssl ? TCPUtils.buildSslContext() : null;
         isEncrypted = ssl;
         group = new NioEventLoopGroup();
         Bootstrap b = new Bootstrap();
@@ -58,7 +57,7 @@ public class TCPClient implements AutoCloseable {
 
             // Input must be created after sslCtx was added
             in = new Input(_this);
-            out = new Output(socket);
+            out = new Output(_this);
         };
         b.group(group)
                 .channel(strictLocal ? LocalChannel.class : NioSocketChannel.class)
@@ -78,44 +77,66 @@ public class TCPClient implements AutoCloseable {
                         });
 
         // Start the client.
-        if(strictLocal)
-            future = b.connect(new LocalAddress(""+port)).sync();
+        if (strictLocal)
+            future = b.connect(new LocalAddress("" + port)).sync();
         else
             future = b.connect(host, port).sync();
     }
 
-    //
-    // TODO Ability to gracefully close the connection.
-    //
-
     public boolean isOpen() {
-        return future != null;
+        return socket != null && socket.isOpen();
     }
 
-    public boolean isClosed(){
-        return future == null;
+    public boolean isClosed() {
+        return socket == null || !socket.isOpen();
     }
 
-    @Override
-    public synchronized void close() throws Exception {
-        if(socket!=null) socket.close();
+    public CompletableFuture<Void> close() throws Exception {
+        System.out.println(TCPUtils.simpleName(this) + ": close");
+        CompletableFuture<Void> f = new CompletableFuture<>();
+        if (out != null) out.writeClose(f);
+        else {
+            closeNow();
+            f.complete(null);
+        }
+        return f;
+    }
+
+    /**
+     * Same as {@link #close()}, but does not throw Exception,
+     * instead throws RuntimeException.
+     */
+    public CompletableFuture<Void> close_() {
+        try {
+            return close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Closes the connection now, without checking remote. <br>
+     * This is not recommended, use {@link #close()} or {@link #close_()}
+     * instead to close the connection gracefully and ensure all data is transmitted/received.
+     */
+    public void closeNow() throws Exception {
+        System.out.println(TCPUtils.simpleName(this) + ": closeNow start");
+        if (socket != null) {
+            socket.close().sync();
+            //future.cancel(true);
+        }
         // Wait until the connection is closed.
         if (future != null) future.channel().closeFuture().sync();
         // Shut down the event loop to terminate all threads.
-        if (group != null) group.shutdownGracefully();
+        if (group != null) group.shutdownGracefully().sync();
 
+        System.out.println(TCPUtils.simpleName(this) + ": closeNow end");
         socket = null;
         future = null;
         group = null;
         readers = null;
-    }
-
-    public void close_(){
-        try{
-            close();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        in = null;
+        out = null;
     }
 
     //

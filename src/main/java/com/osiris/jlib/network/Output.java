@@ -1,23 +1,92 @@
 package com.osiris.jlib.network;
 
+import com.osiris.jlib.network.utils.Loop;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
+/**
+ * Note that this class ís NOT THREAD-SAFE, because
+ * we assume that all writes happen on a single thread.
+ */
 public class Output {
+    public TCPClient client;
     public Channel socket;
+    /**
+     * Gets incremented on every write, and is used to uniquely
+     * identify a write operation. <br>
+     * This makes it possible to send and receive data in an orderly, but
+     * still async fashion. <br>
+     * Remote expects a read with the same ID ({@link Input#readID}).
+     */
+    protected int writeID = 0;
 
-    public Output(Channel socket) {
-        this.socket = socket;
+    public Output(TCPClient client) {
+        this.client = client;
+        this.socket = client.socket;
+    }
+
+    // TODO
+    public <T> void write(T v) {
+        //Data<T> d = new Data<>(writeID++, v);
+        //socket.writeAndFlush(d);
+        /*
+        ByteBuf buf = Unpooled.buffer(32);
+        buf.writeInt(writeID++);
+        buf.wri
+        socket.writeAndFlush(buf);
+
+         */
+    }
+
+    /**
+     * Writes a close request, and expects a close request response from remote
+     * to confirm and execute the close. <br>
+     * If no confirmation is received within 60 seconds,
+     * the connection will be closed anyway.
+     *
+     * @param code code to run once close was read by remote.
+     */
+    public void writeClose(CompletableFuture<?> code) {
+        client.in.readClose().thenAccept(v -> {
+            // Got close from remote telling that it's ready to close
+            try {
+                client.closeNow();
+                code.complete(null);
+            } catch (Exception e) {
+                code.completeExceptionally(e);
+            }
+        });
+        // Only write the close once there is no more pending reads
+        Loop.main.add(1, 60, (_this) -> {
+            if (client.in.pendingBoolean.isEmpty() &&
+                    client.in.pendingShort.isEmpty() &&
+                    client.in.pendingInteger.isEmpty() &&
+                    client.in.pendingLong.isEmpty() &&
+                    client.in.pendingFloat.isEmpty() &&
+                    client.in.pendingDouble.isEmpty() &&
+                    client.in.pendingByteBuf.isEmpty() &&
+                    client.in.pendingString.isEmpty()) { // Do not check pendingClose, since It's always not empty
+                socket.write(new Close());
+                socket.flush();
+                _this.isBreak = true;
+            }
+        });
+    }
+
+    private <T> void addLastPendingReadIfNeeded(List<CompletableFuture<T>> pendingReads,
+                                                List<CompletableFuture<?>> all) {
+        if (!pendingReads.isEmpty()) {
+            all.add(pendingReads.get(pendingReads.size() - 1));
+        }
     }
 
     /**
      * Write a/multiple bytes, aka raw data.
      */
-    public synchronized void writeBytes(byte[] b) {
+    public void writeBytes(byte[] b) {
         socket.write(b);
         flush();
     }
@@ -25,7 +94,7 @@ public class Output {
     /**
      * Write a/multiple bytes, aka raw data.
      */
-    public synchronized void writeBytes(ByteBuf b) {
+    public void writeBytes(ByteBuf b) {
         socket.write(b);
         flush();
     }
@@ -40,7 +109,7 @@ public class Output {
     /**
      * Write a string.
      */
-    public void writeUTF(String s){
+    public void writeUTF(String s) {
         socket.write(s);
         flush();
     }
@@ -54,10 +123,9 @@ public class Output {
      * thrown, the counter {@code written} is incremented by
      * {@code 1}.
      *
-     * @param      v   a {@code boolean} value to be written.
-     * @throws     IOException  if an I/O error occurs.
+     * @param v a {@code boolean} value to be written.
      */
-    public final void writeBoolean(boolean v) throws IOException {
+    public final void writeBoolean(boolean v) {
         socket.write(v);
         flush();
     }
@@ -67,11 +135,9 @@ public class Output {
      * bytes, high byte first. If no exception is thrown, the counter
      * {@code written} is incremented by {@code 2}.
      *
-     * @param      v   a {@code short} to be written.
-     * @throws     IOException  if an I/O error occurs.
-     * 
+     * @param v a {@code short} to be written.
      */
-    public final void writeShort(short v) throws IOException {
+    public final void writeShort(short v) {
         socket.write(v);
         flush();
     }
@@ -81,11 +147,9 @@ public class Output {
      * bytes, high byte first. If no exception is thrown, the counter
      * {@code written} is incremented by {@code 4}.
      *
-     * @param      v   an {@code int} to be written.
-     * @throws     IOException  if an I/O error occurs.
-     * 
+     * @param v an {@code int} to be written.
      */
-    public final void writeInt(int v) throws IOException {
+    public final void writeInt(int v) {
         socket.write(v);
         flush();
     }
@@ -95,11 +159,9 @@ public class Output {
      * bytes, high byte first. In no exception is thrown, the counter
      * {@code written} is incremented by {@code 8}.
      *
-     * @param      v   a {@code long} to be written.
-     * @throws     IOException  if an I/O error occurs.
-     * 
+     * @param v a {@code long} to be written.
      */
-    public final void writeLong(long v) throws IOException {
+    public final void writeLong(long v) {
         socket.write(v);
         flush();
     }
@@ -112,12 +174,10 @@ public class Output {
      * exception is thrown, the counter {@code written} is
      * incremented by {@code 4}.
      *
-     * @param      v   a {@code float} value to be written.
-     * @throws     IOException  if an I/O error occurs.
-     * 
-     * @see        java.lang.Float#floatToIntBits(float)
+     * @param v a {@code float} value to be written.
+     * @see java.lang.Float#floatToIntBits(float)
      */
-    public final void writeFloat(float v) throws IOException {
+    public final void writeFloat(float v) {
         socket.write(v);
         flush();
     }
@@ -130,12 +190,10 @@ public class Output {
      * exception is thrown, the counter {@code written} is
      * incremented by {@code 8}.
      *
-     * @param      v   a {@code double} value to be written.
-     * @throws     IOException  if an I/O error occurs.
-     * 
-     * @see        java.lang.Double#doubleToLongBits(double)
+     * @param v a {@code double} value to be written.
+     * @see java.lang.Double#doubleToLongBits(double)
      */
-    public final void writeDouble(double v) throws IOException {
+    public final void writeDouble(double v) {
         socket.write(v);
         flush();
     }
