@@ -1,15 +1,15 @@
 package com.osiris.jlib.network;
 
+import com.osiris.jlib.network.utils.Later;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.util.ArrayDeque;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class MessageReader<T> extends SimpleChannelInboundHandler<T> {
-    public Queue<CompletableFuture<T>> pending = new ArrayDeque<>(0);
+    public Queue<Later<T>> pending = new ArrayDeque<>(0);
     public Queue<T> buffer = new ArrayDeque<>(0);
     public Consumer<Throwable> onError;
 
@@ -23,8 +23,8 @@ public class MessageReader<T> extends SimpleChannelInboundHandler<T> {
         return pending.isEmpty() && buffer.isEmpty();
     }
 
-    public CompletableFuture<T> read() {
-        CompletableFuture<T> f = new CompletableFuture<>();
+    public Later<T> read() {
+        Later<T> f = new Later<>();
         if (!buffer.isEmpty()) f.complete(buffer.poll());
         else {
             pending.add(f);
@@ -34,6 +34,7 @@ public class MessageReader<T> extends SimpleChannelInboundHandler<T> {
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, T msg) throws Exception {
+        System.out.println(msg);
         if (pending.isEmpty()) buffer.add(msg);
         else {
             pending.poll().complete(msg);

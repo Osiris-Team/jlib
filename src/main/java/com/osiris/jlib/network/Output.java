@@ -1,11 +1,11 @@
 package com.osiris.jlib.network;
 
+import com.osiris.jlib.network.utils.Later;
 import com.osiris.jlib.network.utils.Loop;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 /**
  * Note that this class ís NOT THREAD-SAFE, because
@@ -42,12 +42,13 @@ public class Output {
      *
      * @param code code to run once close was read by remote.
      */
-    public void writeClose(CompletableFuture<?> code) {
-        client.in.readClose().thenAccept(v -> {
+    public void writeClose(Later<?> code) {
+        client.in.readClose().accept(v -> {
             // Got close from remote telling that it's ready to close
             try {
-                client.closeNow();
-                code.complete(null);
+                client.closeNow().accept(_null -> {
+                    code.complete(null);
+                });
             } catch (Exception e) {
                 code.completeExceptionally(e);
             }
@@ -65,11 +66,12 @@ public class Output {
                 writeAndFlushObject(new Close());
                 _this.isBreak = true;
             }
+            // TODO implement 60 second timeout
         });
     }
 
-    private <T> void addLastPendingReadIfNeeded(List<CompletableFuture<T>> pendingReads,
-                                                List<CompletableFuture<?>> all) {
+    private <T> void addLastPendingReadIfNeeded(List<Later<T>> pendingReads,
+                                                List<Later<?>> all) {
         if (!pendingReads.isEmpty()) {
             all.add(pendingReads.get(pendingReads.size() - 1));
         }
@@ -173,6 +175,10 @@ public class Output {
      * @see java.lang.Double#doubleToLongBits(double)
      */
     public final void writeDouble(double v) {
+        writeAndFlushObject(v);
+    }
+
+    public final <T> void writeList(List<T> v){
         writeAndFlushObject(v);
     }
 }

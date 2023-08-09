@@ -1,5 +1,6 @@
 package com.osiris.jlib.network;
 
+import com.osiris.jlib.network.utils.Later;
 import com.osiris.jlib.network.utils.TCPUtils;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -10,7 +11,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public class TCPClient {
@@ -112,13 +112,14 @@ public class TCPClient {
         return socket == null || !socket.isOpen();
     }
 
-    public CompletableFuture<Void> close() throws Exception {
+    public Later<Void> close() throws Exception {
         System.out.println(TCPUtils.simpleName(this) + ": close");
-        CompletableFuture<Void> f = new CompletableFuture<>();
+        Later<Void> f = new Later<>();
         if (out != null) out.writeClose(f);
         else {
-            closeNow();
-            f.complete(null);
+            closeNow().accept(_null -> {
+                f.complete(null);
+            });
         }
         return f;
     }
@@ -127,7 +128,7 @@ public class TCPClient {
      * Same as {@link #close()}, but does not throw Exception,
      * instead throws RuntimeException.
      */
-    public CompletableFuture<Void> close_() {
+    public Later<Void> close_() {
         try {
             return close();
         } catch (Exception e) {
@@ -140,16 +141,17 @@ public class TCPClient {
      * This is not recommended, use {@link #close()} or {@link #close_()}
      * instead to close the connection gracefully and ensure all data is transmitted/received.
      */
-    public void closeNow() throws Exception {
+    public Later<Void> closeNow() throws Exception {
         System.out.println(TCPUtils.simpleName(this) + ": closeNow start");
+        Later<Void> f = new Later<>();
         if (socket != null) {
             socket.close().sync();
             //future.cancel(true);
         }
         // Wait until the connection is closed.
         if (future != null) future.channel().closeFuture().sync();
-        // Shut down the event loop to terminate all threads.
-        if (group != null && server == null) group.shutdownGracefully().sync();
+        // This must be done async, since otherwise it blocks indefinitely it seems
+        if (group != null && server == null) group.shutdown();
 
         System.out.println(TCPUtils.simpleName(this) + ": closeNow end");
         socket = null;
@@ -158,6 +160,8 @@ public class TCPClient {
         readers = null;
         in = null;
         out = null;
+        f.complete(null);
+        return f;
     }
 
     //

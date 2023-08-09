@@ -1,8 +1,9 @@
 package com.osiris.jlib.network;
 
+import com.osiris.jlib.network.utils.Later;
 import io.netty.buffer.ByteBuf;
 
-import java.util.concurrent.CompletableFuture;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class Input {
@@ -19,6 +20,7 @@ public class Input {
     protected MessageReader<Long> pendingLong;
     protected MessageReader<Float> pendingFloat;
     protected MessageReader<Double> pendingDouble;
+    protected MessageReader<List> pendingList;
     protected MessageReader<Close> pendingClose;
 
     /**
@@ -27,7 +29,7 @@ public class Input {
      * 2. Create list that holds completable futures above. <br>
      * 3. Create read method that adds a completable future to that list. <br>
      * 4. Create write method in {@link Output}. <br>
-     * 5. Add the list to {@link Output#writeClose(CompletableFuture)}. <br>
+     * 5. Add the list to {@link Output#writeClose(Later)}. <br>
      *
      * @param client
      */
@@ -58,46 +60,52 @@ public class Input {
         client.readers.addLast(pendingFloat = new MessageReader<>(Float.class, true, onError));
         // Double
         client.readers.addLast(pendingDouble = new MessageReader<>(Double.class, true, onError));
+        // List
+        client.readers.addLast(pendingList = new MessageReader<>(List.class, true, onError));
         // Close
         client.readers.addLast(pendingClose = new MessageReader<>(Close.class, true, onError));
     }
 
-    public CompletableFuture<ByteBuf> readBytes() {
+    public Later<ByteBuf> readBytes() {
         return pendingByteBuf.read();
     }
 
-    public final CompletableFuture<String> readUTF() {
+    public final Later<String> readUTF() {
         return pendingString.read();
     }
 
-    public final CompletableFuture<Boolean> readBoolean() {
+    public final Later<Boolean> readBoolean() {
         return pendingBoolean.read();
     }
 
-    public final CompletableFuture<Short> readShort() {
+    public final Later<Short> readShort() {
         return pendingShort.read();
     }
 
-    public final CompletableFuture<Integer> readInt() {
+    public final Later<Integer> readInt() {
         return pendingInteger.read();
     }
 
-    public final CompletableFuture<Long> readLong() {
+    public final Later<Long> readLong() {
         return pendingLong.read();
     }
 
-    public final CompletableFuture<Float> readFloat() {
+    public final Later<Float> readFloat() {
         return pendingFloat.read();
     }
 
-    public final CompletableFuture<Double> readDouble() {
+    public final Later<Double> readDouble() {
         return pendingDouble.read();
     }
 
     /**
      * See bottom of constructor for details.
      */
-    public final CompletableFuture<Close> readClose() {
+    public final Later<Close> readClose() {
         return pendingClose.read();
+    }
+
+    public final Later<List> readList(){
+        return pendingList.read();
     }
 }

@@ -68,7 +68,7 @@ class TCPServerClientTest {
     @Test
     void clientToServer() throws Exception {
         initLocalServerAndClient((s, sc) -> {
-            sc.in.readUTF().thenAccept(v -> {
+            sc.in.readUTF().accept(v -> {
                 System.out.println("Received client to server msg: "+v);
                 s.close_();
             });
@@ -84,7 +84,7 @@ class TCPServerClientTest {
             sc.out.writeUTF("Hello world!");
             s.close_();
         }, c -> {
-            c.in.readUTF().thenAccept(s -> {
+            c.in.readUTF().accept(s -> {
                 System.out.println("Received server to client msg: "+ s);
                 c.close_();
             });
@@ -95,18 +95,18 @@ class TCPServerClientTest {
     void clientToServer100000() throws Exception {
         initLocalServerAndClient((s, sc) -> {
             List<Integer> l = new ArrayList<>();
-            for (int i = 0; i < 100000; i++) {
-                sc.in.readInt().thenAccept(v -> {
-                    l.add(v);
-                });
-            }
+            sc.in.readList().accept(v -> {
+                l.addAll(v);
+            });
             while (l.size() != 100000) Thread.yield();
             assertTrue(isSortedAscendingWith1Step(l));
             s.close_();
         }, c -> {
+            List<Integer> l = new ArrayList<>();
             for (int i = 0; i < 100000; i++) {
-                c.out.writeInt(i);
+                l.add(i);
             }
+            c.out.writeList(l);
             c.close_();
         });
     }
@@ -114,17 +114,17 @@ class TCPServerClientTest {
     @Test
     void serverToClient100000() throws Exception {
         initLocalServerAndClient((s, sc) -> {
-            for (int i = 0; i < 100000; i++) {
-                sc.out.writeInt(i);
-            }
-            s.close_();
-        }, c -> {
             List<Integer> l = new ArrayList<>();
             for (int i = 0; i < 100000; i++) {
-                c.in.readInt().thenAccept(v -> {
-                    l.add(v);
-                });
+                l.add(i);
             }
+            sc.out.writeList(l);
+            sc.close_();
+        }, c -> {
+            List<Integer> l = new ArrayList<>();
+            c.in.readList().accept(v -> {
+                l.addAll(v);
+            });
             while (l.size() != 100000) Thread.yield();
             assertTrue(isSortedAscendingWith1Step(l));
             c.close_();
