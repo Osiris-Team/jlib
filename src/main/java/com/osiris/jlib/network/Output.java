@@ -27,18 +27,11 @@ public class Output {
         this.client = client;
         this.socket = client.socket;
     }
-
-    // TODO
-    public <T> void write(T v) {
-        //Data<T> d = new Data<>(writeID++, v);
-        //socket.writeAndFlush(d);
-        /*
-        ByteBuf buf = Unpooled.buffer(32);
-        buf.writeInt(writeID++);
-        buf.wri
-        socket.writeAndFlush(buf);
-
-         */
+    
+    public <T> void writeAndFlushObject(T v) {
+        client.group.execute(() -> {
+            client.socket.writeAndFlush(v);
+        });
     }
 
     /**
@@ -69,8 +62,7 @@ public class Output {
                     client.in.pendingDouble.isEmpty() &&
                     client.in.pendingByteBuf.isEmpty() &&
                     client.in.pendingString.isEmpty()) { // Do not check pendingClose, since It's always not empty
-                socket.write(new Close());
-                socket.flush();
+                writeAndFlushObject(new Close());
                 _this.isBreak = true;
             }
         });
@@ -87,31 +79,23 @@ public class Output {
      * Write a/multiple bytes, aka raw data.
      */
     public void writeBytes(byte[] b) {
-        socket.write(b);
-        flush();
+        writeAndFlushObject(b);
+
     }
 
     /**
      * Write a/multiple bytes, aka raw data.
      */
     public void writeBytes(ByteBuf b) {
-        socket.write(b);
-        flush();
-    }
+        writeAndFlushObject(b);
 
-    /**
-     * Submit/Send the buffered data.
-     */
-    public void flush() {
-        socket.flush();
     }
 
     /**
      * Write a string.
      */
     public void writeUTF(String s) {
-        socket.write(s);
-        flush();
+        writeAndFlushObject(s);
     }
 
 
@@ -126,8 +110,7 @@ public class Output {
      * @param v a {@code boolean} value to be written.
      */
     public final void writeBoolean(boolean v) {
-        socket.write(v);
-        flush();
+        writeAndFlushObject(v);
     }
 
     /**
@@ -138,8 +121,7 @@ public class Output {
      * @param v a {@code short} to be written.
      */
     public final void writeShort(short v) {
-        socket.write(v);
-        flush();
+        writeAndFlushObject(v);
     }
 
     /**
@@ -150,8 +132,7 @@ public class Output {
      * @param v an {@code int} to be written.
      */
     public final void writeInt(int v) {
-        socket.write(v);
-        flush();
+        writeAndFlushObject(v);
     }
 
     /**
@@ -162,8 +143,7 @@ public class Output {
      * @param v a {@code long} to be written.
      */
     public final void writeLong(long v) {
-        socket.write(v);
-        flush();
+        writeAndFlushObject(v);
     }
 
     /**
@@ -178,8 +158,7 @@ public class Output {
      * @see java.lang.Float#floatToIntBits(float)
      */
     public final void writeFloat(float v) {
-        socket.write(v);
-        flush();
+        writeAndFlushObject(v);
     }
 
     /**
@@ -194,7 +173,6 @@ public class Output {
      * @see java.lang.Double#doubleToLongBits(double)
      */
     public final void writeDouble(double v) {
-        socket.write(v);
-        flush();
+        writeAndFlushObject(v);
     }
 }

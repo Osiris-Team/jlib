@@ -21,6 +21,25 @@ public class TCPClient {
     public boolean isEncrypted;
     public Output out;
     public Input in;
+    /**
+     * If on the client device this is null. <br>
+     * If on the server device this will be the actual {@link TCPServer}
+     * instance connected to this {@link TCPClient}.
+     */
+    public TCPServer server;
+
+    public TCPClient() {
+    }
+
+    /**
+     *
+     * @param server if not null, then this {qli
+     *               } is the server-side representation
+                      of the actual client, and no actual binding will be done (INTERNAL USE ONLY).
+     */
+    public TCPClient(TCPServer server) {
+        this.server = server;
+    }
 
     /**
      * @param host        host/address/ip.
@@ -31,8 +50,10 @@ public class TCPClient {
      * @throws Exception
      */
     public void open(String host, int port, boolean ssl, boolean strictLocal) throws Exception {
-        System.out.println(TCPUtils.simpleName(this) + ": open");
+        if (server != null) throw new Exception("This TCPClient is a server-side view of the actual" +
+                " client and thus cannot call open(...)!");
         close();
+        System.out.println(TCPUtils.simpleName(this) + ": open");
         final SslContext sslCtx = ssl ? TCPUtils.buildSslContext() : null;
         isEncrypted = ssl;
         group = new NioEventLoopGroup();
@@ -128,7 +149,7 @@ public class TCPClient {
         // Wait until the connection is closed.
         if (future != null) future.channel().closeFuture().sync();
         // Shut down the event loop to terminate all threads.
-        if (group != null) group.shutdownGracefully().sync();
+        if (group != null && server == null) group.shutdownGracefully().sync();
 
         System.out.println(TCPUtils.simpleName(this) + ": closeNow end");
         socket = null;

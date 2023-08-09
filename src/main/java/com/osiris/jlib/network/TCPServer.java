@@ -37,23 +37,14 @@ public class TCPServer {
      * @throws Exception
      */
     public void open(String host, int port, boolean ssl, boolean strictLocal) throws Exception {
-        System.out.println(TCPUtils.simpleName(this) + ": open");
         close();
+        System.out.println(TCPUtils.simpleName(this) + ": open");
         final SslContext sslCtx = ssl ? TCPUtils.buildSslContext() : null;
         isEncrypted = ssl;
 
-        // Writes can be directly made, aka data can be directly sent to remote.
-        // Problem is waiting for data to return, which means reading stuff.
-
-        // Thus writes and reads are added to a list, which get executed
-        // from bottom to top, one after another, however reads do not block
-        // the thread because this is done in an event like fashion.
-
-        // writeString
-        // readInt
-        // writeByte
         Consumer<Channel> initClientChannel = (ch) -> {
-            TCPClient client = new TCPClient();
+            TCPClient client = new TCPClient(this);
+            client.group = workerGroup;
             client.socket = ch;
             client.readers = ch.pipeline();
 
