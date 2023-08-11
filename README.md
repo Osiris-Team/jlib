@@ -60,3 +60,33 @@ Java Sockets API, a lot easier. Additional features:
 - Graceful close, where both parties (host and remote)
 get notified and transmission of data doesn't end abruptly.
 - Send/Receive files or streams.
+
+```java
+        TCPServer server = new TCPServer();
+        server.onClientConnected = c -> {
+            //c.readers.addFirst(new LoggingHandler(LogLevel.INFO));
+            // TODO server logic
+        };
+        server.open("localhost", 3555, false, true);
+
+        TCPClient client = new TCPClient();
+        client.open("localhost", 3555, false, true);
+        //client.readers.addFirst(new LoggingHandler(LogLevel.INFO));
+        // TODO client logic
+```
+Simple, local, client to server hello world, using `initLocalServerAndClient`
+helper method:
+```java
+    @Test
+    void clientToServer() throws Exception {
+        initLocalServerAndClient((server, sclient) -> {
+            sclient.in.readUTF().onSuccess(v -> {
+                System.out.println("Received client to server msg: "+v);
+                server.close_();
+            });
+        }, client -> {
+            client.out.writeUTF("Hello world!");
+            client.close_();
+        });
+    }
+```
