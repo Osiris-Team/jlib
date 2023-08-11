@@ -1,6 +1,7 @@
 package com.osiris.jlib.network;
 
-import com.osiris.jlib.network.utils.Later;
+import com.osiris.jlib.network.utils.Future;
+import com.osiris.jlib.network.utils.Loop;
 import com.osiris.jlib.network.utils.TCPUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
@@ -19,8 +20,9 @@ import java.util.function.Consumer;
 public class TCPServer {
     public EventLoopGroup bossGroup;
     public EventLoopGroup workerGroup;
-    public Channel socket;
+    public Channel channel;
     public boolean isEncrypted;
+    public Future<Void> isClosing = new Future<Void>().finish(null);
     /**
      * List of connected clients.
      */
@@ -38,14 +40,14 @@ public class TCPServer {
      */
     public void open(String host, int port, boolean ssl, boolean strictLocal) throws Exception {
         close();
-        System.out.println(TCPUtils.simpleName(this) + ": open");
+        //System.out.println(TCPUtils.simpleName(this) + ": open");
         final SslContext sslCtx = ssl ? TCPUtils.buildSslContext() : null;
         isEncrypted = ssl;
 
         Consumer<Channel> initClientChannel = (ch) -> {
             TCPClient client = new TCPClient(this);
             client.group = workerGroup;
-            client.socket = ch;
+            client.channel = ch;
             client.readers = ch.pipeline();
 
             if (sslCtx != null) {
@@ -95,48 +97,47 @@ public class TCPServer {
             future = b.bind(new LocalAddress("" + port)).sync();
         else
             future = b.bind(host, port).sync();
-        socket = future.channel();
+        channel = future.channel();
     }
 
     public Consumer<TCPClient> onClientConnected = client -> {
     };
 
     public boolean isOpen() {
-        return socket != null && socket.isOpen();
+        return channel != null && channel.isOpen();
     }
 
     public boolean isClosed() {
-        return socket == null || !socket.isOpen();
+        return channel == null || !channel.isOpen();
     }
 
-    public Later<Void> close() throws Exception {
-        System.out.println(TCPUtils.simpleName(this) + ": close");
-        Later<Void> f = new Later<>();
+    public Future<Void> close() throws Exception {
+        if(isClosing.isPending()) return isClosing;
+
+        //System.out.println(TCPUtils.simpleName(this) + ": close");
         int clientsToClose = clients.size();
         AtomicInteger clientsClosed = new AtomicInteger();
 
-        for (TCPClient c : clients) {
+        if(clientsToClose == 0){
+            closeNow();
+            return isClosing;
+        }
 
-            c.close().accept(null_ -> {
-                System.out.println(TCPUtils.simpleName(this) + ": closed above client (^) in server");
+        for (TCPClient c : clients) {
+            c.close(false).onSuccess(null_ -> {
+                //System.out.println(TCPUtils.simpleName(this) + ": closed above client (^) in server");
                 if (clientsClosed.incrementAndGet() >= clientsToClose)
-                    try {
-                        closeNow().accept(_null -> {
-                            f.complete(null);
-                        });
-                    } catch (Exception e) {
-                        f.completeExceptionally(e);
-                    }
+                    closeNow();
             });
         }
-        return f;
+        return isClosing;
     }
 
     /**
      * Same as {@link #close()}, but does not throw Exception,
      * instead throws RuntimeException.
      */
-    public Later<Void> close_() {
+    public Future<Void> close_() {
         try {
             return close();
         } catch (Exception e) {
@@ -144,23 +145,21 @@ public class TCPServer {
         }
     }
 
-    public Later<Void> closeNow() throws Exception {
-        System.out.println(TCPUtils.simpleName(this) + ": closeNow start");
-        Later<Void> f = new Later<>();
-        if (socket != null) {
-            socket.close().sync();
-            //future.cancel(true);
-        }
-        // Shut down the event loop to terminate all threads.
-        if (bossGroup != null) bossGroup.shutdownGracefully().sync();
-        // This must be done async, since otherwise it blocks indefinitely it seems
-        if (workerGroup != null) workerGroup.shutdownGracefully().addListener(e -> {
-            System.out.println(TCPUtils.simpleName(this) + ": closeNow end");
-            socket = null;
+    public Future<Void> closeNow() {
+        //System.out.println(TCPUtils.simpleName(this) + ": closeNow start");
+        try{
+            if (channel != null) channel.close().sync();
+            // Shut down the event loop to terminate all threads.
+            if (bossGroup != null) bossGroup.shutdownGracefully().sync();
+            if (workerGroup != null) workerGroup.shutdownGracefully().sync();
+            //System.out.println(TCPUtils.simpleName(this) + ": closeNow end");
+            channel = null;
             bossGroup = null;
             workerGroup = null;
-            f.complete(null);
-        });
-        return f;
+            isClosing.complete(null);
+        } catch (Exception ex) {
+            isClosing.completeExceptionally(ex);
+        }
+        return isClosing;
     }
 }

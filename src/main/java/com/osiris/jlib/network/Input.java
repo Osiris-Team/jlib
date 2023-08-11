@@ -1,7 +1,9 @@
 package com.osiris.jlib.network;
 
-import com.osiris.jlib.network.utils.Later;
+import com.osiris.jlib.network.utils.Future;
+import com.osiris.jlib.network.utils.TCPUtils;
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -21,7 +23,7 @@ public class Input {
     protected MessageReader<Float> pendingFloat;
     protected MessageReader<Double> pendingDouble;
     protected MessageReader<List> pendingList;
-    protected MessageReader<Close> pendingClose;
+    protected MessageReader<CloseRequest> pendingClose;
 
     /**
      * CHECKLIST for adding a new TYPE to read: <br>
@@ -29,7 +31,7 @@ public class Input {
      * 2. Create list that holds completable futures above. <br>
      * 3. Create read method that adds a completable future to that list. <br>
      * 4. Create write method in {@link Output}. <br>
-     * 5. Add the list to {@link Output#writeClose(Later)}. <br>
+     * 5. Add the list to {@link Output#writeCloseRequest()}. <br>
      *
      * @param client
      */
@@ -39,7 +41,7 @@ public class Input {
             // Close the connection when an exception is raised.
             e.printStackTrace();
             try {
-                client.close();
+                client.close(true);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
@@ -63,49 +65,48 @@ public class Input {
         // List
         client.readers.addLast(pendingList = new MessageReader<>(List.class, true, onError));
         // Close
-        client.readers.addLast(pendingClose = new MessageReader<>(Close.class, true, onError));
+        client.readers.addLast(pendingClose = new MessageReader<CloseRequest>(CloseRequest.class, true, onError){
+            @Override
+            protected void channelRead0(ChannelHandlerContext ctx, CloseRequest msg) throws Exception {
+                //System.out.println(TCPUtils.simpleName(client)+"-received: "+msg);
+                client.close(true);
+            }
+        });
     }
 
-    public Later<ByteBuf> readBytes() {
+    public Future<ByteBuf> readBytes() {
         return pendingByteBuf.read();
     }
 
-    public final Later<String> readUTF() {
+    public final Future<String> readUTF() {
         return pendingString.read();
     }
 
-    public final Later<Boolean> readBoolean() {
+    public final Future<Boolean> readBoolean() {
         return pendingBoolean.read();
     }
 
-    public final Later<Short> readShort() {
+    public final Future<Short> readShort() {
         return pendingShort.read();
     }
 
-    public final Later<Integer> readInt() {
+    public final Future<Integer> readInt() {
         return pendingInteger.read();
     }
 
-    public final Later<Long> readLong() {
+    public final Future<Long> readLong() {
         return pendingLong.read();
     }
 
-    public final Later<Float> readFloat() {
+    public final Future<Float> readFloat() {
         return pendingFloat.read();
     }
 
-    public final Later<Double> readDouble() {
+    public final Future<Double> readDouble() {
         return pendingDouble.read();
     }
 
-    /**
-     * See bottom of constructor for details.
-     */
-    public final Later<Close> readClose() {
-        return pendingClose.read();
-    }
-
-    public final Later<List> readList(){
+    public final Future<List> readList(){
         return pendingList.read();
     }
 }

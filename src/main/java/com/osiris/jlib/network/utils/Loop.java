@@ -7,10 +7,10 @@ import java.util.function.Consumer;
 
 public class Loop {
     /**
-     * Main loop that executes code every second. <br>
+     * Main loop that executes code every (s) second. <br>
      * Uses a single thread.
      */
-    public static Loop main = new Loop();
+    public static Loop s = new Loop();
     public final int sleepIntervalMillis;
     public final Thread thread;
     public final List<LoopsHolder> list = new ArrayList<>();
@@ -28,11 +28,15 @@ public class Loop {
                     synchronized (list) {
                         for (LoopsHolder loopHolder : list) {
                             for (LoopRunnable loopRunnable : loopHolder.runnables) {
-                                loopRunnable.loopsLeft--;
-                                if (loopRunnable.loopsLeft <= 0 || loopRunnable.isBreak)
+
+                                if (loopRunnable.i >= loopRunnable.maxLoops || loopRunnable.isBreak){
                                     loopHolder.runnables.remove(loopRunnable);
-                                else
-                                    loopRunnable.runnable.accept(loopRunnable);
+                                    loopRunnable.onFinish.accept(loopRunnable);
+                                }
+                                else{
+                                    loopRunnable.code.accept(loopRunnable);
+                                    loopRunnable.i++;
+                                }
                             }
                         }
                     }
@@ -45,7 +49,19 @@ public class Loop {
         thread.start();
     }
 
-    public void add(int interval, int maxLoops, Consumer<LoopRunnable> runnable) {
+    /**
+     * @param interval time to wait before executing the code again.
+     *                 May be seconds, or milliseconds, or anything else,
+     *                 depending on the Loop. The Loop.{@link Loop#s} interval is in seconds for example.
+     * @param maxLoops the max amount of times the code should be executed.
+     * @param loopCode the code to execute in this loop.
+     */
+    public void add(int interval, int maxLoops, Consumer<LoopRunnable> loopCode) {
+        add(interval, maxLoops, loopCode, l -> {});
+    }
+
+    public void add(int interval, int maxLoops, Consumer<LoopRunnable> loopCode,
+                    Consumer<LoopRunnable> onFinish) {
         synchronized (list) {
             LoopsHolder loopsHolder = null;
             for (LoopsHolder le : list) {
@@ -56,7 +72,7 @@ public class Loop {
                 loopsHolder = new LoopsHolder(interval);
                 list.add(loopsHolder);
             }
-            loopsHolder.runnables.add(new LoopRunnable(maxLoops, runnable));
+            loopsHolder.runnables.add(new LoopRunnable(maxLoops, loopCode, onFinish));
         }
     }
 

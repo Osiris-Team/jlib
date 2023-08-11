@@ -1,5 +1,6 @@
 package com.osiris.jlib.network.utils;
 
+import com.osiris.jlib.network.TCPClient;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
@@ -33,6 +34,11 @@ public final class TCPUtils {
             instance = a.incrementAndGet();
             mapNames.put(t.hashCode(), instance);
         }
-        return t.getClass().getSimpleName() + " " + instance;
+        String server = "";
+        if(t instanceof TCPClient){
+            TCPClient c = (TCPClient) t;
+            if(c.server != null) server = "/sw"; // server-view
+        }
+        return t.getClass().getSimpleName() + server + " " + instance;
     }
 }

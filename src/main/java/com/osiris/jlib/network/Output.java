@@ -1,11 +1,11 @@
 package com.osiris.jlib.network;
 
-import com.osiris.jlib.network.utils.Later;
-import com.osiris.jlib.network.utils.Loop;
+import com.osiris.jlib.network.utils.Future;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Note that this class ís NOT THREAD-SAFE, because
@@ -25,12 +25,12 @@ public class Output {
 
     public Output(TCPClient client) {
         this.client = client;
-        this.socket = client.socket;
+        this.socket = client.channel;
     }
     
     public <T> void writeAndFlushObject(T v) {
         client.group.execute(() -> {
-            client.socket.writeAndFlush(v);
+            client.channel.writeAndFlush(v);
         });
     }
 
@@ -42,39 +42,8 @@ public class Output {
      *
      * @param code code to run once close was read by remote.
      */
-    public void writeClose(Later<?> code) {
-        client.in.readClose().accept(v -> {
-            // Got close from remote telling that it's ready to close
-            try {
-                client.closeNow().accept(_null -> {
-                    code.complete(null);
-                });
-            } catch (Exception e) {
-                code.completeExceptionally(e);
-            }
-        });
-        // Only write the close once there is no more pending reads
-        Loop.main.add(1, 60, (_this) -> {
-            if (client.in.pendingBoolean.isEmpty() &&
-                    client.in.pendingShort.isEmpty() &&
-                    client.in.pendingInteger.isEmpty() &&
-                    client.in.pendingLong.isEmpty() &&
-                    client.in.pendingFloat.isEmpty() &&
-                    client.in.pendingDouble.isEmpty() &&
-                    client.in.pendingByteBuf.isEmpty() &&
-                    client.in.pendingString.isEmpty()) { // Do not check pendingClose, since It's always not empty
-                writeAndFlushObject(new Close());
-                _this.isBreak = true;
-            }
-            // TODO implement 60 second timeout
-        });
-    }
-
-    private <T> void addLastPendingReadIfNeeded(List<Later<T>> pendingReads,
-                                                List<Later<?>> all) {
-        if (!pendingReads.isEmpty()) {
-            all.add(pendingReads.get(pendingReads.size() - 1));
-        }
+    public void writeCloseRequest() {
+        writeAndFlushObject(new CloseRequest());
     }
 
     /**
