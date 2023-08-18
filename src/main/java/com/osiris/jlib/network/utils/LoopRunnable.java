@@ -15,7 +15,7 @@ public class LoopRunnable {
         this.onFinish = onFinish;
     }
 
-    public LoopRunnable break_(){
+    public LoopRunnable break_() {
         isBreak = true;
         return this;
     }

@@ -1,19 +1,19 @@
 package com.osiris.jlib.network;
 
+import com.osiris.jlib.interfaces.BConsumer;
 import com.osiris.jlib.network.utils.Future;
-import com.osiris.jlib.network.utils.TCPUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.io.File;
+import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-public class Input {
+public class Input implements InputMethods {
     public TCPClient client;
-    /**
-     * @see Output#writeID
-     */
-    protected int readID = 0;
     protected MessageReader<ByteBuf> pendingByteBuf;
     protected MessageReader<String> pendingString;
     protected MessageReader<Boolean> pendingBoolean;
@@ -65,7 +65,7 @@ public class Input {
         // List
         client.readers.addLast(pendingList = new MessageReader<>(List.class, true, onError));
         // Close
-        client.readers.addLast(pendingClose = new MessageReader<CloseRequest>(CloseRequest.class, true, onError){
+        client.readers.addLast(pendingClose = new MessageReader<CloseRequest>(CloseRequest.class, true, onError) {
             @Override
             protected void channelRead0(ChannelHandlerContext ctx, CloseRequest msg) throws Exception {
                 //System.out.println(TCPUtils.simpleName(client)+"-received: "+msg);
@@ -74,39 +74,87 @@ public class Input {
         });
     }
 
+    @Override
     public Future<ByteBuf> readBytes() {
         return pendingByteBuf.read();
     }
 
+    @Override
     public final Future<String> readUTF() {
         return pendingString.read();
     }
 
+    @Override
     public final Future<Boolean> readBoolean() {
         return pendingBoolean.read();
     }
 
+    @Override
     public final Future<Short> readShort() {
         return pendingShort.read();
     }
 
+    @Override
     public final Future<Integer> readInt() {
         return pendingInteger.read();
     }
 
+    @Override
     public final Future<Long> readLong() {
         return pendingLong.read();
     }
 
+    @Override
     public final Future<Float> readFloat() {
         return pendingFloat.read();
     }
 
+    @Override
     public final Future<Double> readDouble() {
         return pendingDouble.read();
     }
 
-    public final Future<List> readList(){
+    @Override
+    public final Future<List> readList() {
         return pendingList.read();
+    }
+
+    /**
+     * @param dir received data gets written to this directory.
+     */
+    @Override
+    public Future<File> readFile(File dir, long maxBytes) {
+        Future<File> f = new Future<>();
+        readList().onSuccess(l -> {
+            long fileSize = (long) l.get(0);
+            int sectionSize = (int) l.get(1);
+            String fileName = (String) l.get(2);
+
+            long preferedFileSize = fileSize;
+            if (maxBytes > 0) preferedFileSize = Math.min(fileSize, maxBytes);
+            client.out.writeLong(preferedFileSize); // send preferedSizeToRead
+            File file = new File(dir + "/" + fileName);
+            try {
+                if (fileSize == 0) {
+                    f.complete(file);
+                    return;
+                }
+                try (OutputStream fileOut = Files.newOutputStream(file.toPath())) {
+                    AtomicLong totalBytesRead = new AtomicLong();
+                    readBytes().onSuccess(new BConsumer<ByteBuf>() {
+                        @Override
+                        public void accept(ByteBuf bytes) throws Exception {
+                            fileOut.write(bytes.array());
+                            if (totalBytesRead.addAndGet(sectionSize) < fileSize)
+                                readBytes().onSuccess(this, f::completeExceptionally);
+                            else f.complete(file);
+                        }
+                    }, f::completeExceptionally);
+                }
+            } catch (Exception e) {
+                f.completeExceptionally(e);
+            }
+        }, f::completeExceptionally);
+        return f;
     }
 }

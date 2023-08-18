@@ -1,8 +1,7 @@
 package com.osiris.jlib.network;
 
 import com.osiris.jlib.network.utils.Future;
-import com.osiris.jlib.network.utils.Loop;
-import com.osiris.jlib.network.utils.TCPUtils;
+import com.osiris.jlib.network.utils.Net;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
@@ -41,7 +40,7 @@ public class TCPServer {
     public void open(String host, int port, boolean ssl, boolean strictLocal) throws Exception {
         close();
         //System.out.println(TCPUtils.simpleName(this) + ": open");
-        final SslContext sslCtx = ssl ? TCPUtils.buildSslContext() : null;
+        final SslContext sslCtx = ssl ? Net.buildSslContext() : null;
         isEncrypted = ssl;
 
         Consumer<Channel> initClientChannel = (ch) -> {
@@ -112,13 +111,13 @@ public class TCPServer {
     }
 
     public Future<Void> close() throws Exception {
-        if(isClosing.isPending()) return isClosing;
+        if (isClosing.isPending()) return isClosing;
 
         //System.out.println(TCPUtils.simpleName(this) + ": close");
         int clientsToClose = clients.size();
         AtomicInteger clientsClosed = new AtomicInteger();
 
-        if(clientsToClose == 0){
+        if (clientsToClose == 0) {
             closeNow();
             return isClosing;
         }
@@ -147,7 +146,7 @@ public class TCPServer {
 
     public Future<Void> closeNow() {
         //System.out.println(TCPUtils.simpleName(this) + ": closeNow start");
-        try{
+        try {
             if (channel != null) channel.close().sync();
             // Shut down the event loop to terminate all threads.
             if (bossGroup != null) bossGroup.shutdownGracefully().sync();

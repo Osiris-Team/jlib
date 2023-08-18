@@ -2,7 +2,7 @@ package com.osiris.jlib.network;
 
 import com.osiris.jlib.network.utils.Future;
 import com.osiris.jlib.network.utils.Loop;
-import com.osiris.jlib.network.utils.TCPUtils;
+import com.osiris.jlib.network.utils.Net;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.local.LocalAddress;
@@ -12,7 +12,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 public class TCPClient {
@@ -35,10 +34,9 @@ public class TCPClient {
     }
 
     /**
-     *
      * @param server if not null, then this {qli
      *               } is the server-side representation
-                      of the actual client, and no actual binding will be done (INTERNAL USE ONLY).
+     *               of the actual client, and no actual binding will be done (INTERNAL USE ONLY).
      */
     public TCPClient(TCPServer server) {
         this.server = server;
@@ -54,7 +52,7 @@ public class TCPClient {
      */
     public Future<Void> open(String host, int port, boolean ssl, boolean strictLocal) {
         Future<Void> f = new Future<>();
-        if(isOpen() && isClosing.isPending()) {
+        if (isOpen() && isClosing.isPending()) {
             // Execute later, if currently closing old connection
             isClosing.onFinish((v, e) -> {
                 open(host, port, ssl, strictLocal)
@@ -72,7 +70,7 @@ public class TCPClient {
         //System.out.println(TCPUtils.simpleName(this) + ": open");
         final SslContext sslCtx;
         try {
-            sslCtx = ssl ? TCPUtils.buildSslContext() : null;
+            sslCtx = ssl ? Net.buildSslContext() : null;
         } catch (Exception e) {
             f.completeExceptionally(e);
             return f;
@@ -80,16 +78,8 @@ public class TCPClient {
         isEncrypted = ssl;
         group = new NioEventLoopGroup();
         Bootstrap b = new Bootstrap();
-        // Writes can be directly made, aka data can be directly sent to remote.
-        // Problem is waiting for data to return, which means reading stuff.
 
-        // Thus writes and reads are added to a list, which get executed
-        // from bottom to top, one after another, however reads do not block
-        // the thread because this is done in an event like fashion.
 
-        // writeString
-        // readInt
-        // writeByte
         TCPClient _this = this;
         Consumer<Channel> initChannel = (ch) -> {
             channel = ch;
@@ -128,7 +118,7 @@ public class TCPClient {
                         });
 
         // Start the connection
-        try{
+        try {
             if (strictLocal)
                 future = b.connect(new LocalAddress("" + port)).sync();
             else
@@ -155,10 +145,10 @@ public class TCPClient {
     }
 
     public Future<Void> close(boolean isRemoteReadyToClose) {
-        if(isClosed()) return isClosing;
+        if (isClosed()) return isClosing;
 
         //System.out.println(TCPUtils.simpleName(this) + ": close");
-        if(out == null){ // No connection to remote
+        if (out == null) { // No connection to remote
             closeNow();
             return isClosing;
         }
@@ -169,16 +159,16 @@ public class TCPClient {
         Loop.s.add(1, 60, (loop) -> {
             if (isReadyToClose()) {
                 loop.isBreak = true;
-                if(isClosed()) {
+                if (isClosed()) {
                     return;
                 }
 
                 // 2
                 // Before closing we want to receive a confirmation
                 // from remote, that it's ready to close
-                if(isRemoteReadyToClose) closeNow();
-                else{
-                    try{
+                if (isRemoteReadyToClose) closeNow();
+                else {
+                    try {
                         out.writeCloseRequest();
                     } catch (Exception e) {
                         // Channel might already be closed by remote (how tf does that happen?)
@@ -186,7 +176,7 @@ public class TCPClient {
                     }
                     Loop.s.add(1, 60, _this -> {
                     }, _this -> {
-                        if (isOpen()){
+                        if (isOpen()) {
                             // Failed to close after 60 seconds,
                             // thus closing now!
                             closeNow();
@@ -195,7 +185,7 @@ public class TCPClient {
                 }
             }
         }, loop -> {
-            if(!loop.isBreak){
+            if (!loop.isBreak) {
                 // Means that the code above reached the end
                 // of 60 seconds and failed to close gracefully
                 closeNow();
@@ -232,7 +222,7 @@ public class TCPClient {
         //System.out.println(TCPUtils.simpleName(this) + ": closeNow start");
         // Problem: this might be called from inside the event loop and thus
         // get in a deadlock, that's why we do the following:
-        try{
+        try {
             if (isOpen()) channel.close().sync();
             if (group != null && server == null) group.shutdownGracefully().sync();
 
@@ -251,7 +241,8 @@ public class TCPClient {
         return isClosing;
     }
 
-    public boolean isReadyToClose(){
+    public boolean isReadyToClose() {
+        if (in == null) return true;
         return in.pendingBoolean.isEmpty() &&
                 in.pendingShort.isEmpty() &&
                 in.pendingInteger.isEmpty() &&
@@ -261,65 +252,5 @@ public class TCPClient {
                 in.pendingByteBuf.isEmpty() &&
                 in.pendingString.isEmpty(); // Do not check pendingClose, since It's always not empty
     }
-
-    //
-    // Additional methods for reading/writing files.
-    //
-
-    /*
-    public void writeFile(File file) throws IOException {
-        writeFile(file, -1);
-    }
-
-    public void readFile(File file) throws IOException {
-        readFile(file, -1);
-    }
-
-    public void writeFile(File file, long maxBytes) throws IOException {
-        long fileSize = file.length();
-        if (maxBytes > 0) fileSize = Math.min(fileSize, maxBytes);
-        out.writeLong(fileSize);
-        long preferedSizeToRead = in.readLong();
-        if (preferedSizeToRead > 0) fileSize = Math.min(fileSize, preferedSizeToRead);
-        try (InputStream fileIn = Files.newInputStream(file.toPath())) {
-            writeStream(fileIn, fileSize);
-        }
-    }
-
-    public void readFile(File file, long maxBytes) throws IOException {
-        long fileSize = in.readLong();
-        if (maxBytes > 0) fileSize = Math.min(fileSize, maxBytes);
-        out.writeLong(fileSize); // send preferedSizeToRead
-        try (OutputStream fileOut = Files.newOutputStream(file.toPath())) {
-            readStream(fileOut, fileSize);
-        }
-    }
-
-    public void writeStream(InputStream in, long maxBytes) throws IOException {
-        byte[] buffer = new byte[4096];
-        int totalBytesSent = 0;
-        int bytesRead;
-
-        while (totalBytesSent < maxBytes && (bytesRead = in.read(buffer)) != -1) {
-            out.write(buffer, 0, bytesRead);
-            totalBytesSent += bytesRead;
-        }
-    }
-
-    public void readStream(OutputStream out, long maxBytes) throws IOException {
-        byte[] buffer = new byte[4096];
-        int bytesRead;
-        int totalBytesReceived = 0;
-
-        // TODO
-
-        while (totalBytesReceived < maxBytes && (bytesRead = in.read(buffer)) != -1) {
-            out.write(buffer, 0, bytesRead);
-            totalBytesReceived += bytesRead;
-        }
-
-
-    }
-    */
 
 }

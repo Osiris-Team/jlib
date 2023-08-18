@@ -11,11 +11,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Some useful methods for server side.
+ * TCP network utils.
  */
-public final class TCPUtils {
+public final class Net {
 
-    private TCPUtils() {
+    private Net() {
     }
 
     public static SslContext buildSslContext() throws CertificateException, SSLException {
@@ -23,6 +23,10 @@ public final class TCPUtils {
         return SslContextBuilder
                 .forServer(ssc.certificate(), ssc.privateKey())
                 .build();
+    }
+
+    public static ListBuilder list() {
+        return new ListBuilder();
     }
 
     private static final ConcurrentHashMap<Integer, Integer> mapNames = new ConcurrentHashMap<>();
@@ -35,9 +39,9 @@ public final class TCPUtils {
             mapNames.put(t.hashCode(), instance);
         }
         String server = "";
-        if(t instanceof TCPClient){
+        if (t instanceof TCPClient) {
             TCPClient c = (TCPClient) t;
-            if(c.server != null) server = "/sw"; // server-view
+            if (c.server != null) server = "/sw"; // server-view
         }
         return t.getClass().getSimpleName() + server + " " + instance;
     }

@@ -14,21 +14,32 @@ import java.util.List;
  * Note that this class ís NOT THREAD-SAFE, because
  * we assume that all writes happen on a single thread.
  */
-public class Output implements OutputMethods {
+public class OutputOrdered implements OutputMethods {
     public TCPClient client;
+    /**
+     * Gets incremented on every write, and is used to uniquely
+     * identify a write operation. <br>
+     * This makes it possible to send and receive data in an orderly, but
+     * still async fashion. <br>
+     * Remote expects a read with the same ID ({@link InputOrdered#readID}).
+     */
+    protected int writeID = 0;
 
-    public Output(TCPClient client) {
+    public OutputOrdered(TCPClient client) {
         this.client = client;
     }
 
     public <T> Future<Void> writeAndFlushObject(T v) {
-        Future<Void> onRemoteReceived = new Future<>();
-        ChannelPromise p = client.channel.newPromise();
-        p.addListener(onRemoteReceived::finishWithObject);
-        client.group.execute(() -> {
-            client.channel.writeAndFlush(v, p);
-        });
-        return onRemoteReceived;
+        synchronized (this) {
+            writeID++;
+            Future<Void> onRemoteReceived = new Future<>();
+            ChannelPromise p = client.channel.newPromise();
+            p.addListener(onRemoteReceived::finishWithObject);
+            client.group.execute(() -> {
+                client.channel.writeAndFlush(new Data<>(writeID, v), p);
+            });
+            return onRemoteReceived;
+        }
     }
 
     /**
@@ -36,9 +47,8 @@ public class Output implements OutputMethods {
      * to confirm and execute the close. <br>
      * If no confirmation is received within 60 seconds,
      * the connection will be closed anyway.
-     *
-     * @return code to run once close was read by remote.
      */
+    @Override
     public Future<Void> writeCloseRequest() {
         return writeAndFlushObject(new CloseRequest());
     }
@@ -130,7 +140,7 @@ public class Output implements OutputMethods {
      * incremented by {@code 4}.
      *
      * @param v a {@code float} value to be written.
-     * @see java.lang.Float#floatToIntBits(float)
+     * @see Float#floatToIntBits(float)
      */
     @Override
     public final Future<Void> writeFloat(float v) {
@@ -146,7 +156,7 @@ public class Output implements OutputMethods {
      * incremented by {@code 8}.
      *
      * @param v a {@code double} value to be written.
-     * @see java.lang.Double#doubleToLongBits(double)
+     * @see Double#doubleToLongBits(double)
      */
     @Override
     public final Future<Void> writeDouble(double v) {

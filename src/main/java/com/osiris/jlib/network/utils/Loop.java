@@ -29,11 +29,10 @@ public class Loop {
                         for (LoopsHolder loopHolder : list) {
                             for (LoopRunnable loopRunnable : loopHolder.runnables) {
 
-                                if (loopRunnable.i >= loopRunnable.maxLoops || loopRunnable.isBreak){
+                                if (loopRunnable.i >= loopRunnable.maxLoops || loopRunnable.isBreak) {
                                     loopHolder.runnables.remove(loopRunnable);
                                     loopRunnable.onFinish.accept(loopRunnable);
-                                }
-                                else{
+                                } else {
                                     loopRunnable.code.accept(loopRunnable);
                                     loopRunnable.i++;
                                 }
@@ -57,7 +56,8 @@ public class Loop {
      * @param loopCode the code to execute in this loop.
      */
     public void add(int interval, int maxLoops, Consumer<LoopRunnable> loopCode) {
-        add(interval, maxLoops, loopCode, l -> {});
+        add(interval, maxLoops, loopCode, l -> {
+        });
     }
 
     public void add(int interval, int maxLoops, Consumer<LoopRunnable> loopCode,

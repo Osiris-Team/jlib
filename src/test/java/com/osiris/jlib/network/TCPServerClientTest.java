@@ -1,9 +1,13 @@
 package com.osiris.jlib.network;
 
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -22,22 +26,26 @@ class TCPServerClientTest {
      */
     public static TCPServer initLocalServerAndClient(BiConsumer<TCPServer, TCPClient> codeOnServer,
                                                      Consumer<TCPClient> codeOnClient) throws Exception {
+
         TCPServer server = new TCPServer();
         server.onClientConnected = c -> {
-            //c.readers.addFirst(new LoggingHandler(LogLevel.INFO));
+            c.readers.addFirst(new LoggingHandler(LogLevel.INFO));
             codeOnServer.accept(server, c);
         };
         server.open("localhost", 3555, false, true);
 
         TCPClient client = new TCPClient();
         client.open("localhost", 3555, false, true);
-        //client.readers.addFirst(new LoggingHandler(LogLevel.INFO));
-        codeOnClient.accept(client);
+        client.readers.addFirst(new LoggingHandler(LogLevel.INFO));
+        new Thread(() -> {
+            codeOnClient.accept(client);
+        }).start();
+
         boolean serverOpen = true, clientOpen = true;
         for (int i = 0; i < 100; i++) {
             serverOpen = server.isOpen();
             clientOpen = client.isOpen();
-            System.out.println("Status: serverOpen="+serverOpen +" clientOpen="+clientOpen);
+            System.out.println("Status: serverOpen="+serverOpen +" clientOpen="+clientOpen+" timeLeft="+(100-i)+"s");
             if(!serverOpen && !clientOpen) break;
             Thread.sleep(1000);
         }
@@ -68,6 +76,35 @@ class TCPServerClientTest {
         }
         return true;
     }
+
+
+    // TODO
+    @Test
+    void orderedInAndOut() throws Exception {
+        initLocalServerAndClient((s, sc) -> {
+            sc.in.readUTF() // 1
+                            .onSuccess(aa -> {
+                                sc.in.readUTF(); // 2 ?
+                            });
+
+            sc.in.readLong(); // 3 ?
+
+
+            s.close_();
+        }, c -> {
+            c.out.writeUTF("Hello world!") // 1
+                    .onSuccess(n -> {
+                c.out.writeUTF(""); // 2 ?
+            });
+
+            c.out.writeLong(0); // 3 ?
+
+
+            c.close_();
+        });
+    }
+
+
 
     @Test
     void clientToServer() throws Exception {
@@ -135,6 +172,43 @@ class TCPServerClientTest {
         });
     }
 
+    @Test
+    void mixedList() throws Exception {
+        Consumer<TCPClient> clientSide = c -> {
+            List<Object> l = new ArrayList<>();
+            l.add(new Object());
+            l.add(0);
+            l.add(0.0);
+            l.add("");
+            l.add(new HashMap<String, Double>());
+            c.out.writeList(l);
+            c.close_();
+        };
+
+        Consumer<TCPClient> serverSide = (c) -> {
+            c.in.readList().onSuccess(l -> {
+                // If a cast below fails, an exception is thrown
+                Object o0 = l.get(0);
+                int o1 = (int) l.get(1);
+                double o2 = (double) l.get(2);
+                String o3 = (String) l.get(3);
+                Map<String, Double> o4 = (Map<String, Double>) l.get(4);
+            });
+        };
+
+
+        initLocalServerAndClient((s, c) -> {
+            serverSide.accept(c);
+            s.close_();
+        }, clientSide);
+        System.out.println("Success: client to server");
+
+        initLocalServerAndClient((s, c) -> {
+            clientSide.accept(c);
+            s.close_();
+        }, serverSide);
+        System.out.println("Success: server to client");
+    }
 
     @Test
     void clientToServer100000() throws Exception {
@@ -142,10 +216,14 @@ class TCPServerClientTest {
         // and only closes after the 60 second timeout, forcefully.
         initLocalServerAndClient((s, sc) -> {
             List<Integer> l = new ArrayList<>();
-            for (int i = 0; i < 100000; i++) {
+            while(l.size() < 100000){
                 sc.in.readInt().thenAccept(v -> {
+                    if(l.size() < 100000)
                     l.add(v);
                 });
+            }
+            for (int i = 0; i < 100000; i++) {
+
             }
             s.close_();
             try{ // Check
