@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.osiris.jlib.Stream;
 import com.osiris.jlib.json.exceptions.HttpErrorException;
 import com.osiris.jlib.json.exceptions.WrongJsonTypeException;
+import okhttp3.*;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -11,6 +12,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class Json {
 
@@ -86,62 +88,65 @@ public class Json {
     }
 
     /**
+     * Performs an HTTP request using OkHttp.
      * Returns the json-element. This can be a json-array or a json-object.
      *
-     * @param url The url which leads to the json file.
-     * @return JsonElement
-     * @throws HttpErrorException When status code outside of range 200 to 299 (or not one of the provided success codes).
+     * @param requestMethod  The HTTP request method ("GET" or "POST").
+     * @param url            The URL to fetch data from.
+     * @param elementToSend  The JSON element to send (null for GET requests).
+     * @param successCodes   Success HTTP status codes.
+     * @return JsonElement containing the parsed JSON response.
+     * @throws IOException         If an error occurs during the request.
+     * @throws HttpErrorException If the HTTP response status code is outside the success range or not one of the provided success codes.
      */
     public static JsonElement get(String requestMethod, String url, JsonElement elementToSend, Integer... successCodes) throws IOException, HttpErrorException {
-        HttpURLConnection con = null;
-        try {
-            con = (HttpURLConnection) new URL(url).openConnection();
-            con.addRequestProperty("User-Agent", "jlib by Osiris");
-            con.addRequestProperty("Content-Type", "application/json");
-            con.setConnectTimeout(1000);
-            con.setRequestMethod(requestMethod);
-            con.setDoOutput(true);
-            con.setDoInput(true);
-            con.connect();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS) // Adjust timeouts as needed
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build();
 
-            if (elementToSend != null) {
-                OutputStream out = con.getOutputStream();
-                try (OutputStreamWriter outWrt = new OutputStreamWriter(out)) {
-                    try (BufferedReader inr = new BufferedReader(new StringReader(new Gson().toJson(elementToSend)))) {
-                        String l = null;
-                        while ((l = inr.readLine()) != null) {
-                            outWrt.write(l);
-                        }
-                    }
-                }
-            } // After POST finishes get RESPONSE:
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(url)
+                .addHeader("User-Agent", "jlib by Osiris")
+                .addHeader("Content-Type", "application/json");
 
-            int code = con.getResponseCode();
-            if ((code > 199 && code < 300) || (successCodes != null && Arrays.asList(successCodes).contains(code))) {
-                InputStream in = con.getInputStream();
-                if (in != null) {
-                    String s = Stream.toString(in);
-                    try {
-                        return JsonParser.parseString(s);
-                    } catch (Throwable e) {
-                        throw new IOException("Issues while parsing json: \nurl: " + url + " \nmessage: " + e.getMessage() + " \njson: \n" + s, e);
-                    }
-                }
-            } else {
-                InputStream in = con.getErrorStream();
-                String s = null;
-                if (in != null) {
-                    s = Stream.toString(in);
-                }
-                throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + con.getResponseMessage() + "\njson: \n" + s);
-            }
-        } catch (IOException | HttpErrorException e) {
-            if (con != null) con.disconnect();
-            throw e;
-        } finally {
-            if (con != null) con.disconnect();
+        if (elementToSend != null) {
+            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), new Gson().toJson(elementToSend));
+            requestBuilder.method(requestMethod, requestBody);
+        } else {
+            requestBuilder.method(requestMethod, null);
         }
-        return null;
+
+        Request request = requestBuilder.build();
+
+        try (Response response = client.newCall(request).execute()) {
+            ResponseBody responseBody = response.body();
+            int code = response.code();
+
+            if (!isSuccess(code, successCodes)) {
+                throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + response.message() + "\njson: \n" + responseBody.string());
+            }
+
+            String responseJson = responseBody.string();
+            return JsonParser.parseString(responseJson);
+        }
+    }
+
+    /**
+     * Checks if the HTTP response code is in the success range or matches any of the provided success codes.
+     *
+     * @param code         The HTTP response code to check.
+     * @param successCodes Success HTTP status codes.
+     * @return true if the code is in the success range or matches any of the success codes, false otherwise.
+     */
+    private static boolean isSuccess(int code, Integer... successCodes) {
+        if (code >= 200 && code < 300) {
+            return true;
+        }
+        if (successCodes != null) {
+            return Arrays.asList(successCodes).contains(code);
+        }
+        return false;
     }
 
     public static JsonElement post(String url, JsonElement element) throws IOException, HttpErrorException {
