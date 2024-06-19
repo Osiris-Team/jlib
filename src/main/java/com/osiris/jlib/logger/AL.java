@@ -52,6 +52,7 @@ public class AL {
     public static boolean isDebugEnabled = false;
     public static boolean isStarted = false;
     public static boolean hasAnsiSupport = false;
+    public static boolean isAnsi = false;
     public static boolean isForcedAnsi = false;
     // Basically lists that contain code to run when the specific event happens
     public static List<MessageEvent<Message>> actionsOnMessageEvent = new CopyOnWriteArrayList<>();
@@ -206,6 +207,7 @@ public class AL {
         start("Logger",
                 false,
                 new File(System.getProperty("user.dir") + "/logs/latest.log"),
+                true,
                 false
         );
     }
@@ -221,12 +223,13 @@ public class AL {
      * @param latestLog the file to write the latest log to. The sub-directories /error /warn /full will also
      *                  be created inside that files directory.
      */
-    public static void start(String name, boolean debug, File latestLog, boolean forceAnsi) {
+    public static void start(String name, boolean debug, File latestLog, boolean ansi, boolean forceAnsi) {
         if (isStarted) return;
         isStarted = true;
         if (latestLog.isDirectory()) throw new IllegalArgumentException("Cannot be directory!");
         NAME = name;
         isDebugEnabled = debug;
+        isAnsi = ansi;
         isForcedAnsi = forceAnsi;
 
         try {
@@ -275,8 +278,10 @@ public class AL {
         try {
             // Note that if only colors are not supported by the terminal, the below wont throw an Exception.
             // Actually AnsiConsole strips the ANSI away automatically by itself.
-            AnsiConsole.systemInstall();
-            hasAnsiSupport = true;
+            if(isAnsi){
+                AnsiConsole.systemInstall();
+                hasAnsiSupport = true;
+            }
         } catch (Exception e) {
             hasAnsiSupport = false;
             AnsiConsole.systemUninstall();
