@@ -281,6 +281,9 @@ public class AL {
             if(isAnsi){
                 AnsiConsole.systemInstall();
                 hasAnsiSupport = true;
+            } else{
+                hasAnsiSupport = false;
+                STRIPPED_OUT = new PrintWriter(LogFileWriter.getBufferedWriterForOutputStream(System.out));
             }
         } catch (Exception e) {
             hasAnsiSupport = false;
