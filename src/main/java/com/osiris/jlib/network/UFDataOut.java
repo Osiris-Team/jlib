@@ -54,7 +54,7 @@ public class UFDataOut extends DataOutputStream {
         int count;
         byte[] buffer = new byte[8192]; // or 4096, or more
         while ((count = in.read(buffer)) > 0) {
-            writeUTF(encoder.encodeToString(buffer));
+            writeUTF(new String(encoder.encode(buffer), StandardCharsets.UTF_8));
             flush();
             totalCount += count;
         }
