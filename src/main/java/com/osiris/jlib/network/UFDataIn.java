@@ -8,8 +8,6 @@
 
 package com.osiris.jlib.network;
 
-import com.osiris.jlib.logger.AL;
-
 import javax.naming.LimitExceededException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -29,9 +27,9 @@ public class UFDataIn extends DataInputStream{
     /**
      * @param file write receiving data to this file.
      */
-    public void readFile(File file) throws IOException {
+    public long readFile(File file) throws IOException {
         try (FileOutputStream out = new FileOutputStream(file)) {
-            readStream(out);
+            return readStream(out);
         }
     }
 
@@ -39,18 +37,18 @@ public class UFDataIn extends DataInputStream{
      * @param file write receiving data to this file.
      * @param maxBytes set to -1 if no limit wanted.
      */
-    public void readFile(File file, long maxBytes) throws IOException, LimitExceededException {
+    public long readFile(File file, long maxBytes) throws IOException, LimitExceededException {
         try (FileOutputStream out = new FileOutputStream(file)) {
-            readStream(out, maxBytes);
+            return readStream(out, maxBytes);
         }
     }
 
     /**
      * @param out write receiving data to this stream.
      */
-    public void readStream(OutputStream out) throws IOException {
+    public long readStream(OutputStream out) throws IOException {
         try{
-            readStream(out, -1);
+            return readStream(out, -1);
         } catch (LimitExceededException e) { // Not excepted to happen since no limit
             throw new RuntimeException(e);
         }
@@ -60,7 +58,7 @@ public class UFDataIn extends DataInputStream{
      * @param out write receiving data to this stream.
      * @param maxBytes set to -1 if no limit wanted.
      */
-    public void readStream(OutputStream out, long maxBytes) throws IOException, LimitExceededException {
+    public long readStream(OutputStream out, long maxBytes) throws IOException, LimitExceededException {
         /*
          * Handling Non-Text Data: If the input stream
          *  contains binary data (like images or other non-text files),
@@ -85,7 +83,7 @@ public class UFDataIn extends DataInputStream{
             out.write(buffer, 0, count);
             out.flush();
         }
-        AL.debug(this.getClass(), "Bytes read: " + countBytesRead);
+        return countBytesRead;
         //read("\u001a") // Not needed here since already read above by read()
     }
 

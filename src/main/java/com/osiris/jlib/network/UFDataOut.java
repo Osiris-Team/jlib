@@ -8,8 +8,6 @@
 
 package com.osiris.jlib.network;
 
-import com.osiris.jlib.logger.AL;
-
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -31,16 +29,16 @@ public class UFDataOut extends DataOutputStream {
     /**
      * @param file read data from this file and send it.
      */
-    public void writeFile(File file) throws IOException {
+    public long writeFile(File file) throws IOException {
         try (FileInputStream in = new FileInputStream(file)) {
-            writeStream(in);
+            return writeStream(in);
         }
     }
 
     /**
      * @param in read data from this stream and send it.
      */
-    public void writeStream(InputStream in) throws IOException {
+    public long writeStream(InputStream in) throws IOException {
         /*
          * Handling Non-Text Data: If the input stream
          *  contains binary data (like images or other non-text files),
@@ -61,7 +59,7 @@ public class UFDataOut extends DataOutputStream {
             totalCount += count;
         }
         writeUTF(EOF); // Write since not included above
-        AL.debug(this.getClass(), "Bytes sent: " + totalCount);
         flush();
+        return totalCount;
     }
 }
