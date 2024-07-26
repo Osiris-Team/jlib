@@ -12,6 +12,7 @@ import com.osiris.jlib.logger.AL;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 
 /**
@@ -54,7 +55,8 @@ public class UFDataOut extends DataOutputStream {
         int count;
         byte[] buffer = new byte[8192]; // or 4096, or more
         while ((count = in.read(buffer)) > 0) {
-            writeUTF(new String(encoder.encode(buffer), StandardCharsets.UTF_8));
+            if (count == buffer.length) writeUTF(new String(encoder.encode(buffer), StandardCharsets.UTF_8));
+            else writeUTF(new String(encoder.encode(Arrays.copyOf(buffer, count)), StandardCharsets.UTF_8));
             flush();
             totalCount += count;
         }
