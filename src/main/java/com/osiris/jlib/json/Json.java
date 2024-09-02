@@ -4,10 +4,24 @@ import com.google.gson.*;
 import com.osiris.jlib.Stream;
 import com.osiris.jlib.json.exceptions.HttpErrorException;
 import com.osiris.jlib.json.exceptions.WrongJsonTypeException;
-import okhttp3.*;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpVersion;
+import org.apache.hc.core5.http.ParseException;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
+import org.apache.hc.core5.http.io.entity.StringEntity;
+import org.apache.hc.core5.http.message.BasicHttpRequest;
+import org.apache.hc.core5.http.message.RequestLine;
+import org.apache.hc.core5.util.Timeout;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -88,7 +102,7 @@ public class Json {
     }
 
     /**
-     * Performs an HTTP request using OkHttp.
+     * Performs an HTTP request using Apache HttpClient.
      * Returns the json-element. This can be a json-array or a json-object.
      *
      * @param requestMethod  The HTTP request method ("GET" or "POST").
@@ -100,35 +114,35 @@ public class Json {
      * @throws HttpErrorException If the HTTP response status code is outside the success range or not one of the provided success codes.
      */
     public static JsonElement get(String requestMethod, String url, JsonElement elementToSend, Integer... successCodes) throws IOException, HttpErrorException {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS) // Adjust timeouts as needed
-                .readTimeout(10, TimeUnit.SECONDS)
-                .build();
+        try (CloseableHttpClient httpclient = HttpClients.custom()
+                .build()) {
 
-        Request.Builder requestBuilder = new Request.Builder()
-                .url(url)
-                .addHeader("User-Agent", "jlib by Osiris")
-                .addHeader("Content-Type", "application/json");
+            HttpUriRequestBase request = new HttpUriRequestBase(requestMethod, URI.create(url));
 
-        if (elementToSend != null) {
-            RequestBody requestBody = RequestBody.create(MediaType.parse("application/json"), new Gson().toJson(elementToSend));
-            requestBuilder.method(requestMethod, requestBody);
-        } else {
-            requestBuilder.method(requestMethod, null);
-        }
-
-        Request request = requestBuilder.build();
-
-        try (Response response = client.newCall(request).execute()) {
-            ResponseBody responseBody = response.body();
-            int code = response.code();
-
-            if (!isSuccess(code, successCodes)) {
-                throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + response.message() + "\njson: \n" + responseBody.string());
+            if (elementToSend != null) {
+                StringEntity requestEntity = new StringEntity(
+                        elementToSend.toString(),
+                        ContentType.APPLICATION_JSON);
+                request.setEntity(requestEntity);
             }
 
-            String responseJson = responseBody.string();
-            return JsonParser.parseString(responseJson);
+            request.setHeader("User-Agent", "jlib by Osiris");
+            request.setHeader("Content-Type", "application/json");
+
+            try (CloseableHttpResponse response = httpclient.execute(request)) {
+                int code = response.getCode();
+                HttpEntity entity = response.getEntity();
+
+                if (!isSuccess(code, successCodes)) {
+                    String responseBody = entity != null ? EntityUtils.toString(entity) : null;
+                    throw new HttpErrorException(code, null, "\nurl: " + url + " \nmessage: " + response.getReasonPhrase() + "\njson: \n" + responseBody);
+                } else{
+                    String responseJson = entity == null ? "{}" : EntityUtils.toString(entity);
+                    return JsonParser.parseString(responseJson);
+                }
+            } catch (ParseException e) {
+                throw new IOException("Failed to parse response JSON", e);
+            }
         }
     }
 
